@@ -1,0 +1,11 @@
+group,function,value,sample_time_nanos,iteration_count
+bench_large_input,decode_slice,31457280,32906963,2
+bench_large_input,decode_slice,31457280,64105830,4
+bench_large_input,decode_slice,31457280,96235821,6
+bench_large_input,decode_slice,31457280,128364182,8
+bench_large_input,decode_slice,31457280,159782735,10
+bench_large_input,decode_slice,31457280,193911124,12
+bench_large_input,decode_slice,31457280,224522738,14
+bench_large_input,decode_slice,31457280,257280738,16
+bench_large_input,decode_slice,31457280,290223753,18
+bench_large_input,decode_slice,31457280,322646683,20
