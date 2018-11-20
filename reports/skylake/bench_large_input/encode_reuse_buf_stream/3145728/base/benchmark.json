@@ -1,0 +1,1 @@
+{"group_id":"bench_large_input","function_id":"encode_reuse_buf_stream","value_str":"3145728","throughput":{"Bytes":3145728},"full_id":"bench_large_input/encode_reuse_buf_stream/3145728","directory_name":"bench_large_input/encode_reuse_buf_stream/3145728"}

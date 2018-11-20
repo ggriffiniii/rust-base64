@@ -1,0 +1,710 @@
+Benchmarking bench_small_input/encode/3
+Benchmarking bench_small_input/encode/3: Warming up for 500.00 ms
+Benchmarking bench_small_input/encode/3: Collecting 100 samples in estimated 3.0001 s (79M iterations)
+Benchmarking bench_small_input/encode/3: Analyzing
+bench_small_input/encode/3
+                        time:   [37.713 ns 37.742 ns 37.772 ns]
+                        thrpt:  [75.744 MiB/s 75.805 MiB/s 75.862 MiB/s]
+                        change: [+2.4835% +2.6984% +2.8964%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 1 outliers among 100 measurements (1.00%)
+  1 (1.00%) high mild
+Benchmarking bench_small_input/encode/50
+Benchmarking bench_small_input/encode/50: Warming up for 500.00 ms
+Benchmarking bench_small_input/encode/50: Collecting 100 samples in estimated 3.0001 s (45M iterations)
+Benchmarking bench_small_input/encode/50: Analyzing
+bench_small_input/encode/50
+                        time:   [65.338 ns 65.589 ns 65.966 ns]
+                        thrpt:  [722.85 MiB/s 727.00 MiB/s 729.80 MiB/s]
+                        change: [-4.7080% -0.3745% +5.8176%] (p = 0.91 > 0.05)
+                        No change in performance detected.
+Found 10 outliers among 100 measurements (10.00%)
+  4 (4.00%) high mild
+  6 (6.00%) high severe
+Benchmarking bench_small_input/encode/100
+Benchmarking bench_small_input/encode/100: Warming up for 500.00 ms
+Benchmarking bench_small_input/encode/100: Collecting 100 samples in estimated 3.0004 s (38M iterations)
+Benchmarking bench_small_input/encode/100: Analyzing
+bench_small_input/encode/100
+                        time:   [79.004 ns 79.046 ns 79.092 ns]
+                        thrpt:  [1.1775 GiB/s 1.1782 GiB/s 1.1788 GiB/s]
+                        change: [-21.634% -21.568% -21.481%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 7 outliers among 100 measurements (7.00%)
+  4 (4.00%) high mild
+  3 (3.00%) high severe
+Benchmarking bench_small_input/encode/500
+Benchmarking bench_small_input/encode/500: Warming up for 500.00 ms
+Benchmarking bench_small_input/encode/500: Collecting 100 samples in estimated 3.0000 s (18M iterations)
+Benchmarking bench_small_input/encode/500: Analyzing
+bench_small_input/encode/500
+                        time:   [162.64 ns 162.67 ns 162.70 ns]
+                        thrpt:  [2.8620 GiB/s 2.8627 GiB/s 2.8632 GiB/s]
+                        change: [-50.296% -49.969% -49.678%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 10 outliers among 100 measurements (10.00%)
+  9 (9.00%) high mild
+  1 (1.00%) high severe
+Benchmarking bench_small_input/encode/3072
+Benchmarking bench_small_input/encode/3072: Warming up for 500.00 ms
+Benchmarking bench_small_input/encode/3072: Collecting 100 samples in estimated 3.0022 s (3.9M iterations)
+Benchmarking bench_small_input/encode/3072: Analyzing
+bench_small_input/encode/3072
+                        time:   [770.12 ns 770.28 ns 770.46 ns]
+                        thrpt:  [3.7134 GiB/s 3.7142 GiB/s 3.7150 GiB/s]
+                        change: [-54.448% -54.413% -54.389%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 3 outliers among 100 measurements (3.00%)
+  2 (2.00%) high mild
+  1 (1.00%) high severe
+Benchmarking bench_small_input/encode_display/3
+Benchmarking bench_small_input/encode_display/3: Warming up for 500.00 ms
+Benchmarking bench_small_input/encode_display/3: Collecting 100 samples in estimated 3.0002 s (37M iterations)
+Benchmarking bench_small_input/encode_display/3: Analyzing
+bench_small_input/encode_display/3
+                        time:   [79.811 ns 80.558 ns 81.463 ns]
+                        thrpt:  [35.120 MiB/s 35.515 MiB/s 35.847 MiB/s]
+                        change: [+0.0981% +0.4347% +0.9718%] (p = 0.03 < 0.05)
+                        Change within noise threshold.
+Found 8 outliers among 100 measurements (8.00%)
+  2 (2.00%) high mild
+  6 (6.00%) high severe
+Benchmarking bench_small_input/encode_display/50
+Benchmarking bench_small_input/encode_display/50: Warming up for 500.00 ms
+Benchmarking bench_small_input/encode_display/50: Collecting 100 samples in estimated 3.0003 s (26M iterations)
+Benchmarking bench_small_input/encode_display/50: Analyzing
+bench_small_input/encode_display/50
+                        time:   [113.86 ns 113.88 ns 113.91 ns]
+                        thrpt:  [418.61 MiB/s 418.71 MiB/s 418.80 MiB/s]
+                        change: [+3.5738% +3.6243% +3.6752%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 5 outliers among 100 measurements (5.00%)
+  3 (3.00%) high mild
+  2 (2.00%) high severe
+Benchmarking bench_small_input/encode_display/100
+Benchmarking bench_small_input/encode_display/100: Warming up for 500.00 ms
+Benchmarking bench_small_input/encode_display/100: Collecting 100 samples in estimated 3.0006 s (23M iterations)
+Benchmarking bench_small_input/encode_display/100: Analyzing
+bench_small_input/encode_display/100
+                        time:   [126.81 ns 126.86 ns 126.92 ns]
+                        thrpt:  [751.40 MiB/s 751.75 MiB/s 752.06 MiB/s]
+                        change: [-9.7638% -8.8493% -8.2900%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 8 outliers among 100 measurements (8.00%)
+  7 (7.00%) high mild
+  1 (1.00%) high severe
+Benchmarking bench_small_input/encode_display/500
+Benchmarking bench_small_input/encode_display/500: Warming up for 500.00 ms
+Benchmarking bench_small_input/encode_display/500: Collecting 100 samples in estimated 3.0009 s (14M iterations)
+Benchmarking bench_small_input/encode_display/500: Analyzing
+bench_small_input/encode_display/500
+                        time:   [213.71 ns 213.78 ns 213.86 ns]
+                        thrpt:  [2.1774 GiB/s 2.1782 GiB/s 2.1790 GiB/s]
+                        change: [-41.019% -40.861% -40.707%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 12 outliers among 100 measurements (12.00%)
+  9 (9.00%) high mild
+  3 (3.00%) high severe
+Benchmarking bench_small_input/encode_display/3072
+Benchmarking bench_small_input/encode_display/3072: Warming up for 500.00 ms
+Benchmarking bench_small_input/encode_display/3072: Collecting 100 samples in estimated 3.0049 s (2.5M iterations)
+Benchmarking bench_small_input/encode_display/3072: Analyzing
+bench_small_input/encode_display/3072
+                        time:   [1.1942 us 1.1946 us 1.1951 us]
+                        thrpt:  [2.3940 GiB/s 2.3949 GiB/s 2.3958 GiB/s]
+                        change: [-41.910% -41.880% -41.849%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 7 outliers among 100 measurements (7.00%)
+  6 (6.00%) high mild
+  1 (1.00%) high severe
+Benchmarking bench_small_input/encode_reuse_buf/3
+Benchmarking bench_small_input/encode_reuse_buf/3: Warming up for 500.00 ms
+Benchmarking bench_small_input/encode_reuse_buf/3: Collecting 100 samples in estimated 3.0001 s (91M iterations)
+Benchmarking bench_small_input/encode_reuse_buf/3: Analyzing
+bench_small_input/encode_reuse_buf/3
+                        time:   [32.889 ns 33.020 ns 33.147 ns]
+                        thrpt:  [86.312 MiB/s 86.645 MiB/s 86.991 MiB/s]
+                        change: [+2.4408% +2.7930% +3.1681%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Benchmarking bench_small_input/encode_reuse_buf/50
+Benchmarking bench_small_input/encode_reuse_buf/50: Warming up for 500.00 ms
+Benchmarking bench_small_input/encode_reuse_buf/50: Collecting 100 samples in estimated 3.0002 s (51M iterations)
+Benchmarking bench_small_input/encode_reuse_buf/50: Analyzing
+bench_small_input/encode_reuse_buf/50
+                        time:   [58.701 ns 58.722 ns 58.745 ns]
+                        thrpt:  [811.71 MiB/s 812.02 MiB/s 812.32 MiB/s]
+                        change: [-1.7607% -1.6757% -1.5878%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 11 outliers among 100 measurements (11.00%)
+  8 (8.00%) high mild
+  3 (3.00%) high severe
+Benchmarking bench_small_input/encode_reuse_buf/100
+Benchmarking bench_small_input/encode_reuse_buf/100: Warming up for 500.00 ms
+Benchmarking bench_small_input/encode_reuse_buf/100: Collecting 100 samples in estimated 3.0003 s (41M iterations)
+Benchmarking bench_small_input/encode_reuse_buf/100: Analyzing
+bench_small_input/encode_reuse_buf/100
+                        time:   [73.733 ns 74.323 ns 75.072 ns]
+                        thrpt:  [1.2406 GiB/s 1.2531 GiB/s 1.2631 GiB/s]
+                        change: [-16.372% -15.843% -15.215%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 10 outliers among 100 measurements (10.00%)
+  10 (10.00%) high severe
+Benchmarking bench_small_input/encode_reuse_buf/500
+Benchmarking bench_small_input/encode_reuse_buf/500: Warming up for 500.00 ms
+Benchmarking bench_small_input/encode_reuse_buf/500: Collecting 100 samples in estimated 3.0006 s (18M iterations)
+Benchmarking bench_small_input/encode_reuse_buf/500: Analyzing
+bench_small_input/encode_reuse_buf/500
+                        time:   [160.44 ns 160.97 ns 162.03 ns]
+                        thrpt:  [2.8739 GiB/s 2.8928 GiB/s 2.9024 GiB/s]
+                        change: [-49.108% -48.998% -48.831%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 3 outliers among 100 measurements (3.00%)
+  2 (2.00%) high mild
+  1 (1.00%) high severe
+Benchmarking bench_small_input/encode_reuse_buf/3072
+Benchmarking bench_small_input/encode_reuse_buf/3072: Warming up for 500.00 ms
+Benchmarking bench_small_input/encode_reuse_buf/3072: Collecting 100 samples in estimated 3.0007 s (3.3M iterations)
+Benchmarking bench_small_input/encode_reuse_buf/3072: Analyzing
+bench_small_input/encode_reuse_buf/3072
+                        time:   [922.91 ns 923.49 ns 924.10 ns]
+                        thrpt:  [3.0960 GiB/s 3.0981 GiB/s 3.1000 GiB/s]
+                        change: [-49.350% -49.318% -49.288%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 1 outliers among 100 measurements (1.00%)
+  1 (1.00%) high mild
+Benchmarking bench_small_input/encode_slice/3
+Benchmarking bench_small_input/encode_slice/3: Warming up for 500.00 ms
+Benchmarking bench_small_input/encode_slice/3: Collecting 100 samples in estimated 3.0000 s (305M iterations)
+Benchmarking bench_small_input/encode_slice/3: Analyzing
+bench_small_input/encode_slice/3
+                        time:   [9.7667 ns 9.7681 ns 9.7697 ns]
+                        thrpt:  [292.85 MiB/s 292.89 MiB/s 292.94 MiB/s]
+                        change: [+5.5764% +5.6151% +5.6488%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 17 outliers among 100 measurements (17.00%)
+  3 (3.00%) low mild
+  5 (5.00%) high mild
+  9 (9.00%) high severe
+Benchmarking bench_small_input/encode_slice/50
+Benchmarking bench_small_input/encode_slice/50: Warming up for 500.00 ms
+Benchmarking bench_small_input/encode_slice/50: Collecting 100 samples in estimated 3.0001 s (85M iterations)
+Benchmarking bench_small_input/encode_slice/50: Analyzing
+bench_small_input/encode_slice/50
+                        time:   [35.133 ns 35.143 ns 35.153 ns]
+                        thrpt:  [1.3247 GiB/s 1.3251 GiB/s 1.3254 GiB/s]
+                        change: [+2.7303% +2.8390% +2.9440%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 5 outliers among 100 measurements (5.00%)
+  4 (4.00%) high mild
+  1 (1.00%) high severe
+Benchmarking bench_small_input/encode_slice/100
+Benchmarking bench_small_input/encode_slice/100: Warming up for 500.00 ms
+Benchmarking bench_small_input/encode_slice/100: Collecting 100 samples in estimated 3.0000 s (67M iterations)
+Benchmarking bench_small_input/encode_slice/100: Analyzing
+bench_small_input/encode_slice/100
+                        time:   [43.691 ns 43.711 ns 43.732 ns]
+                        thrpt:  [2.1296 GiB/s 2.1306 GiB/s 2.1316 GiB/s]
+                        change: [-50.953% -50.854% -50.754%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 7 outliers among 100 measurements (7.00%)
+  5 (5.00%) high mild
+  2 (2.00%) high severe
+Benchmarking bench_small_input/encode_slice/500
+Benchmarking bench_small_input/encode_slice/500: Warming up for 500.00 ms
+Benchmarking bench_small_input/encode_slice/500: Collecting 100 samples in estimated 3.0001 s (26M iterations)
+Benchmarking bench_small_input/encode_slice/500: Analyzing
+bench_small_input/encode_slice/500
+                        time:   [114.85 ns 115.05 ns 115.27 ns]
+                        thrpt:  [4.0399 GiB/s 4.0476 GiB/s 4.0544 GiB/s]
+                        change: [-55.315% -55.246% -55.175%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 6 outliers among 100 measurements (6.00%)
+  1 (1.00%) low mild
+  5 (5.00%) high mild
+Benchmarking bench_small_input/encode_slice/3072
+Benchmarking bench_small_input/encode_slice/3072: Warming up for 500.00 ms
+Benchmarking bench_small_input/encode_slice/3072: Collecting 100 samples in estimated 3.0020 s (5.0M iterations)
+Benchmarking bench_small_input/encode_slice/3072: Analyzing
+bench_small_input/encode_slice/3072
+                        time:   [597.10 ns 597.40 ns 597.83 ns]
+                        thrpt:  [4.7857 GiB/s 4.7891 GiB/s 4.7915 GiB/s]
+                        change: [-60.114% -60.044% -59.971%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 1 outliers among 100 measurements (1.00%)
+  1 (1.00%) high severe
+Benchmarking bench_small_input/encode_reuse_buf_stream/3
+Benchmarking bench_small_input/encode_reuse_buf_stream/3: Warming up for 500.00 ms
+Benchmarking bench_small_input/encode_reuse_buf_stream/3: Collecting 100 samples in estimated 3.0000 s (109M iterations)
+Benchmarking bench_small_input/encode_reuse_buf_stream/3: Analyzing
+bench_small_input/encode_reuse_buf_stream/3
+                        time:   [27.270 ns 27.324 ns 27.395 ns]
+                        thrpt:  [104.44 MiB/s 104.71 MiB/s 104.91 MiB/s]
+                        change: [+4.1792% +4.6646% +5.2307%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 20 outliers among 100 measurements (20.00%)
+  20 (20.00%) high severe
+Benchmarking bench_small_input/encode_reuse_buf_stream/50
+Benchmarking bench_small_input/encode_reuse_buf_stream/50: Warming up for 500.00 ms
+Benchmarking bench_small_input/encode_reuse_buf_stream/50: Collecting 100 samples in estimated 3.0002 s (44M iterations)
+Benchmarking bench_small_input/encode_reuse_buf_stream/50: Analyzing
+bench_small_input/encode_reuse_buf_stream/50
+                        time:   [66.679 ns 66.778 ns 66.880 ns]
+                        thrpt:  [712.98 MiB/s 714.06 MiB/s 715.12 MiB/s]
+                        change: [-2.6614% -2.4276% -2.1852%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 3 outliers among 100 measurements (3.00%)
+  2 (2.00%) low mild
+  1 (1.00%) high mild
+Benchmarking bench_small_input/encode_reuse_buf_stream/100
+Benchmarking bench_small_input/encode_reuse_buf_stream/100: Warming up for 500.00 ms
+Benchmarking bench_small_input/encode_reuse_buf_stream/100: Collecting 100 samples in estimated 3.0002 s (37M iterations)
+Benchmarking bench_small_input/encode_reuse_buf_stream/100: Analyzing
+bench_small_input/encode_reuse_buf_stream/100
+                        time:   [78.630 ns 78.667 ns 78.706 ns]
+                        thrpt:  [1.1833 GiB/s 1.1839 GiB/s 1.1844 GiB/s]
+                        change: [-13.390% -13.322% -13.255%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 4 outliers among 100 measurements (4.00%)
+  1 (1.00%) low mild
+  2 (2.00%) high mild
+  1 (1.00%) high severe
+Benchmarking bench_small_input/encode_reuse_buf_stream/500
+Benchmarking bench_small_input/encode_reuse_buf_stream/500: Warming up for 500.00 ms
+Benchmarking bench_small_input/encode_reuse_buf_stream/500: Collecting 100 samples in estimated 3.0002 s (18M iterations)
+Benchmarking bench_small_input/encode_reuse_buf_stream/500: Analyzing
+bench_small_input/encode_reuse_buf_stream/500
+                        time:   [156.61 ns 156.96 ns 157.31 ns]
+                        thrpt:  [2.9602 GiB/s 2.9667 GiB/s 2.9734 GiB/s]
+                        change: [-46.731% -46.617% -46.508%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 4 outliers among 100 measurements (4.00%)
+  3 (3.00%) low mild
+  1 (1.00%) high mild
+Benchmarking bench_small_input/encode_reuse_buf_stream/3072
+Benchmarking bench_small_input/encode_reuse_buf_stream/3072: Warming up for 500.00 ms
+Benchmarking bench_small_input/encode_reuse_buf_stream/3072: Collecting 100 samples in estimated 3.0003 s (4.0M iterations)
+Benchmarking bench_small_input/encode_reuse_buf_stream/3072: Analyzing
+bench_small_input/encode_reuse_buf_stream/3072
+                        time:   [758.31 ns 759.86 ns 761.54 ns]
+                        thrpt:  [3.7569 GiB/s 3.7652 GiB/s 3.7729 GiB/s]
+                        change: [-52.206% -52.084% -51.965%] (p = 0.00 < 0.05)
+                        Performance has improved.
+
+Benchmarking bench_large_input/encode/3145728
+Benchmarking bench_large_input/encode/3145728: Warming up for 500.00 ms
+Benchmarking bench_large_input/encode/3145728: Collecting 10 samples in estimated 3.0381 s (1705 iterations)
+Benchmarking bench_large_input/encode/3145728: Analyzing
+bench_large_input/encode/3145728
+                        time:   [1.6576 ms 1.6720 ms 1.6890 ms]
+                        thrpt:  [1.7345 GiB/s 1.7523 GiB/s 1.7675 GiB/s]
+                        change: [-44.040% -41.868% -40.263%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Benchmarking bench_large_input/encode/10485760
+Benchmarking bench_large_input/encode/10485760: Warming up for 500.00 ms
+Benchmarking bench_large_input/encode/10485760: Collecting 10 samples in estimated 3.0664 s (550 iterations)
+Benchmarking bench_large_input/encode/10485760: Analyzing
+bench_large_input/encode/10485760
+                        time:   [4.4935 ms 4.5462 ms 4.5906 ms]
+                        thrpt:  [2.1273 GiB/s 2.1481 GiB/s 2.1733 GiB/s]
+                        change: [-44.636% -43.749% -42.926%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Benchmarking bench_large_input/encode/31457280
+Benchmarking bench_large_input/encode/31457280: Warming up for 500.00 ms
+Benchmarking bench_large_input/encode/31457280: Collecting 10 samples in estimated 4.0396 s (165 iterations)
+Benchmarking bench_large_input/encode/31457280: Analyzing
+bench_large_input/encode/31457280
+                        time:   [15.277 ms 15.338 ms 15.403 ms]
+                        thrpt:  [1.9020 GiB/s 1.9101 GiB/s 1.9177 GiB/s]
+                        change: [-37.068% -36.854% -36.619%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Benchmarking bench_large_input/encode_display/3145728
+Benchmarking bench_large_input/encode_display/3145728: Warming up for 500.00 ms
+Benchmarking bench_large_input/encode_display/3145728: Collecting 10 samples in estimated 3.0313 s (1100 iterations)
+Benchmarking bench_large_input/encode_display/3145728: Analyzing
+bench_large_input/encode_display/3145728
+                        time:   [2.4890 ms 2.5205 ms 2.5527 ms]
+                        thrpt:  [1.1477 GiB/s 1.1624 GiB/s 1.1770 GiB/s]
+                        change: [-35.010% -34.474% -33.800%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 2 outliers among 10 measurements (20.00%)
+  1 (10.00%) high mild
+  1 (10.00%) high severe
+Benchmarking bench_large_input/encode_display/10485760
+Benchmarking bench_large_input/encode_display/10485760: Warming up for 500.00 ms
+Benchmarking bench_large_input/encode_display/10485760: Collecting 10 samples in estimated 3.1348 s (385 iterations)
+Benchmarking bench_large_input/encode_display/10485760: Analyzing
+bench_large_input/encode_display/10485760
+                        time:   [6.2788 ms 6.3311 ms 6.3606 ms]
+                        thrpt:  [1.5353 GiB/s 1.5425 GiB/s 1.5553 GiB/s]
+                        change: [-43.078% -42.728% -42.363%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Benchmarking bench_large_input/encode_display/31457280
+Benchmarking bench_large_input/encode_display/31457280: Warming up for 500.00 ms
+Benchmarking bench_large_input/encode_display/31457280: Collecting 10 samples in estimated 3.6825 s (110 iterations)
+Benchmarking bench_large_input/encode_display/31457280: Analyzing
+bench_large_input/encode_display/31457280
+                        time:   [17.245 ms 17.393 ms 17.474 ms]
+                        thrpt:  [1.6766 GiB/s 1.6844 GiB/s 1.6988 GiB/s]
+                        change: [-31.554% -31.144% -30.723%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Benchmarking bench_large_input/encode_reuse_buf/3145728
+Benchmarking bench_large_input/encode_reuse_buf/3145728: Warming up for 500.00 ms
+Benchmarking bench_large_input/encode_reuse_buf/3145728: Collecting 10 samples in estimated 3.0392 s (2640 iterations)
+Benchmarking bench_large_input/encode_reuse_buf/3145728: Analyzing
+bench_large_input/encode_reuse_buf/3145728
+                        time:   [1.0044 ms 1.0123 ms 1.0199 ms]
+                        thrpt:  [2.8726 GiB/s 2.8942 GiB/s 2.9169 GiB/s]
+                        change: [-48.802% -48.149% -47.563%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Benchmarking bench_large_input/encode_reuse_buf/10485760
+Benchmarking bench_large_input/encode_reuse_buf/10485760: Warming up for 500.00 ms
+Benchmarking bench_large_input/encode_reuse_buf/10485760: Collecting 10 samples in estimated 3.1218 s (550 iterations)
+Benchmarking bench_large_input/encode_reuse_buf/10485760: Analyzing
+bench_large_input/encode_reuse_buf/10485760
+                        time:   [4.2921 ms 4.3606 ms 4.4789 ms]
+                        thrpt:  [2.1803 GiB/s 2.2395 GiB/s 2.2753 GiB/s]
+                        change: [-41.191% -40.106% -38.500%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high severe
+Benchmarking bench_large_input/encode_reuse_buf/31457280
+Benchmarking bench_large_input/encode_reuse_buf/31457280: Warming up for 500.00 ms
+Benchmarking bench_large_input/encode_reuse_buf/31457280: Collecting 10 samples in estimated 3.7505 s (165 iterations)
+Benchmarking bench_large_input/encode_reuse_buf/31457280: Analyzing
+bench_large_input/encode_reuse_buf/31457280
+                        time:   [12.728 ms 12.953 ms 13.303 ms]
+                        thrpt:  [2.2023 GiB/s 2.2617 GiB/s 2.3017 GiB/s]
+                        change: [-42.344% -40.578% -38.723%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+Benchmarking bench_large_input/encode_slice/3145728
+Benchmarking bench_large_input/encode_slice/3145728: Warming up for 500.00 ms
+Benchmarking bench_large_input/encode_slice/3145728: Collecting 10 samples in estimated 3.0322 s (4510 iterations)
+Benchmarking bench_large_input/encode_slice/3145728: Analyzing
+bench_large_input/encode_slice/3145728
+                        time:   [584.28 us 586.91 us 592.91 us]
+                        thrpt:  [4.9412 GiB/s 4.9917 GiB/s 5.0142 GiB/s]
+                        change: [-61.352% -61.024% -60.696%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Benchmarking bench_large_input/encode_slice/10485760
+Benchmarking bench_large_input/encode_slice/10485760: Warming up for 500.00 ms
+Benchmarking bench_large_input/encode_slice/10485760: Collecting 10 samples in estimated 3.1497 s (1100 iterations)
+Benchmarking bench_large_input/encode_slice/10485760: Analyzing
+bench_large_input/encode_slice/10485760
+                        time:   [2.1799 ms 2.1919 ms 2.2118 ms]
+                        thrpt:  [4.4153 GiB/s 4.4552 GiB/s 4.4799 GiB/s]
+                        change: [-62.317% -62.077% -61.790%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+Benchmarking bench_large_input/encode_slice/31457280
+Benchmarking bench_large_input/encode_slice/31457280: Warming up for 500.00 ms
+Benchmarking bench_large_input/encode_slice/31457280: Collecting 10 samples in estimated 3.2065 s (165 iterations)
+Benchmarking bench_large_input/encode_slice/31457280: Analyzing
+bench_large_input/encode_slice/31457280
+                        time:   [8.5619 ms 8.5943 ms 8.6389 ms]
+                        thrpt:  [3.3913 GiB/s 3.4089 GiB/s 3.4218 GiB/s]
+                        change: [-50.392% -50.229% -50.065%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Benchmarking bench_large_input/encode_reuse_buf_stream/3145728
+Benchmarking bench_large_input/encode_reuse_buf_stream/3145728: Warming up for 500.00 ms
+Benchmarking bench_large_input/encode_reuse_buf_stream/3145728: Collecting 10 samples in estimated 3.0294 s (3630 iterations)
+Benchmarking bench_large_input/encode_reuse_buf_stream/3145728: Analyzing
+bench_large_input/encode_reuse_buf_stream/3145728
+                        time:   [764.67 us 767.03 us 769.29 us]
+                        thrpt:  [3.8083 GiB/s 3.8195 GiB/s 3.8313 GiB/s]
+                        change: [-58.026% -57.795% -57.596%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Benchmarking bench_large_input/encode_reuse_buf_stream/10485760
+Benchmarking bench_large_input/encode_reuse_buf_stream/10485760: Warming up for 500.00 ms
+Benchmarking bench_large_input/encode_reuse_buf_stream/10485760: Collecting 10 samples in estimated 3.0373 s (715 iterations)
+Benchmarking bench_large_input/encode_reuse_buf_stream/10485760: Analyzing
+bench_large_input/encode_reuse_buf_stream/10485760
+                        time:   [2.9877 ms 3.0087 ms 3.0248 ms]
+                        thrpt:  [3.2285 GiB/s 3.2458 GiB/s 3.2686 GiB/s]
+                        change: [-55.183% -54.846% -54.497%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Benchmarking bench_large_input/encode_reuse_buf_stream/31457280
+Benchmarking bench_large_input/encode_reuse_buf_stream/31457280: Warming up for 500.00 ms
+Benchmarking bench_large_input/encode_reuse_buf_stream/31457280: Collecting 10 samples in estimated 3.4953 s (165 iterations)
+Benchmarking bench_large_input/encode_reuse_buf_stream/31457280: Analyzing
+bench_large_input/encode_reuse_buf_stream/31457280
+                        time:   [11.331 ms 11.370 ms 11.441 ms]
+                        thrpt:  [2.5606 GiB/s 2.5766 GiB/s 2.5855 GiB/s]
+                        change: [-44.411% -43.573% -42.576%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high severe
+
+Benchmarking bench_small_input/decode/3
+Benchmarking bench_small_input/decode/3: Warming up for 500.00 ms
+Benchmarking bench_small_input/decode/3: Collecting 100 samples in estimated 3.0004 s (36M iterations)
+Benchmarking bench_small_input/decode/3: Analyzing
+bench_small_input/decode/3
+                        time:   [82.873 ns 82.896 ns 82.924 ns]
+                        thrpt:  [34.502 MiB/s 34.513 MiB/s 34.523 MiB/s]
+                        change: [-9.5812% -3.3075% +0.4619%] (p = 0.39 > 0.05)
+                        No change in performance detected.
+Found 6 outliers among 100 measurements (6.00%)
+  3 (3.00%) high mild
+  3 (3.00%) high severe
+Benchmarking bench_small_input/decode/50
+Benchmarking bench_small_input/decode/50: Warming up for 500.00 ms
+Benchmarking bench_small_input/decode/50: Collecting 100 samples in estimated 3.0003 s (38M iterations)
+Benchmarking bench_small_input/decode/50: Analyzing
+bench_small_input/decode/50
+                        time:   [79.135 ns 79.156 ns 79.176 ns]
+                        thrpt:  [602.25 MiB/s 602.40 MiB/s 602.56 MiB/s]
+                        change: [+2.5831% +2.6230% +2.6685%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 5 outliers among 100 measurements (5.00%)
+  3 (3.00%) low mild
+  2 (2.00%) high severe
+Benchmarking bench_small_input/decode/100
+Benchmarking bench_small_input/decode/100: Warming up for 500.00 ms
+Benchmarking bench_small_input/decode/100: Collecting 100 samples in estimated 3.0005 s (27M iterations)
+Benchmarking bench_small_input/decode/100: Analyzing
+bench_small_input/decode/100
+                        time:   [109.46 ns 109.51 ns 109.57 ns]
+                        thrpt:  [870.37 MiB/s 870.82 MiB/s 871.25 MiB/s]
+                        change: [-0.4760% +1.2117% +2.3246%] (p = 0.08 > 0.05)
+                        No change in performance detected.
+Found 5 outliers among 100 measurements (5.00%)
+  4 (4.00%) high mild
+  1 (1.00%) high severe
+Benchmarking bench_small_input/decode/500
+Benchmarking bench_small_input/decode/500: Warming up for 500.00 ms
+Benchmarking bench_small_input/decode/500: Collecting 100 samples in estimated 3.0005 s (10M iterations)
+Benchmarking bench_small_input/decode/500: Analyzing
+bench_small_input/decode/500
+                        time:   [296.88 ns 297.08 ns 297.29 ns]
+                        thrpt:  [1.5663 GiB/s 1.5675 GiB/s 1.5685 GiB/s]
+                        change: [+1.5223% +1.7708% +2.0074%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 3 outliers among 100 measurements (3.00%)
+  2 (2.00%) high mild
+  1 (1.00%) high severe
+Benchmarking bench_small_input/decode/3072
+Benchmarking bench_small_input/decode/3072: Warming up for 500.00 ms
+Benchmarking bench_small_input/decode/3072: Collecting 100 samples in estimated 3.0027 s (1.9M iterations)
+Benchmarking bench_small_input/decode/3072: Analyzing
+bench_small_input/decode/3072
+                        time:   [1.5564 us 1.5603 us 1.5643 us]
+                        thrpt:  [1.8289 GiB/s 1.8336 GiB/s 1.8383 GiB/s]
+                        change: [-0.2871% -0.0403% +0.2074%] (p = 0.75 > 0.05)
+                        No change in performance detected.
+Found 2 outliers among 100 measurements (2.00%)
+  1 (1.00%) low mild
+  1 (1.00%) high mild
+Benchmarking bench_small_input/decode_reuse_buf/3
+Benchmarking bench_small_input/decode_reuse_buf/3: Warming up for 500.00 ms
+Benchmarking bench_small_input/decode_reuse_buf/3: Collecting 100 samples in estimated 3.0000 s (105M iterations)
+Benchmarking bench_small_input/decode_reuse_buf/3: Analyzing
+bench_small_input/decode_reuse_buf/3
+                        time:   [28.325 ns 28.407 ns 28.493 ns]
+                        thrpt:  [100.41 MiB/s 100.72 MiB/s 101.01 MiB/s]
+                        change: [-0.6879% -0.4530% -0.1983%] (p = 0.00 < 0.05)
+                        Change within noise threshold.
+Benchmarking bench_small_input/decode_reuse_buf/50
+Benchmarking bench_small_input/decode_reuse_buf/50: Warming up for 500.00 ms
+Benchmarking bench_small_input/decode_reuse_buf/50: Collecting 100 samples in estimated 3.0001 s (55M iterations)
+Benchmarking bench_small_input/decode_reuse_buf/50: Analyzing
+bench_small_input/decode_reuse_buf/50
+                        time:   [53.183 ns 53.417 ns 53.780 ns]
+                        thrpt:  [886.64 MiB/s 892.66 MiB/s 896.59 MiB/s]
+                        change: [+7.4213% +9.2827% +12.867%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 8 outliers among 100 measurements (8.00%)
+  4 (4.00%) low mild
+  2 (2.00%) high mild
+  2 (2.00%) high severe
+Benchmarking bench_small_input/decode_reuse_buf/100
+Benchmarking bench_small_input/decode_reuse_buf/100: Warming up for 500.00 ms
+Benchmarking bench_small_input/decode_reuse_buf/100: Collecting 100 samples in estimated 3.0003 s (37M iterations)
+Benchmarking bench_small_input/decode_reuse_buf/100: Analyzing
+bench_small_input/decode_reuse_buf/100
+                        time:   [80.501 ns 80.520 ns 80.544 ns]
+                        thrpt:  [1.1563 GiB/s 1.1566 GiB/s 1.1569 GiB/s]
+                        change: [+7.0153% +7.2382% +7.4602%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 6 outliers among 100 measurements (6.00%)
+  5 (5.00%) high mild
+  1 (1.00%) high severe
+Benchmarking bench_small_input/decode_reuse_buf/500
+Benchmarking bench_small_input/decode_reuse_buf/500: Warming up for 500.00 ms
+Benchmarking bench_small_input/decode_reuse_buf/500: Collecting 100 samples in estimated 3.0014 s (11M iterations)
+Benchmarking bench_small_input/decode_reuse_buf/500: Analyzing
+bench_small_input/decode_reuse_buf/500
+                        time:   [267.58 ns 268.13 ns 268.67 ns]
+                        thrpt:  [1.7332 GiB/s 1.7367 GiB/s 1.7403 GiB/s]
+                        change: [+1.3216% +1.6550% +1.9617%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 5 outliers among 100 measurements (5.00%)
+  2 (2.00%) low severe
+  3 (3.00%) low mild
+Benchmarking bench_small_input/decode_reuse_buf/3072
+Benchmarking bench_small_input/decode_reuse_buf/3072: Warming up for 500.00 ms
+Benchmarking bench_small_input/decode_reuse_buf/3072: Collecting 100 samples in estimated 3.0033 s (1.9M iterations)
+Benchmarking bench_small_input/decode_reuse_buf/3072: Analyzing
+bench_small_input/decode_reuse_buf/3072
+                        time:   [1.5564 us 1.5674 us 1.5812 us]
+                        thrpt:  [1.8095 GiB/s 1.8254 GiB/s 1.8382 GiB/s]
+                        change: [+2.3503% +3.0134% +3.7395%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 13 outliers among 100 measurements (13.00%)
+  2 (2.00%) low severe
+  1 (1.00%) low mild
+  1 (1.00%) high mild
+  9 (9.00%) high severe
+Benchmarking bench_small_input/decode_slice/3
+Benchmarking bench_small_input/decode_slice/3: Warming up for 500.00 ms
+Benchmarking bench_small_input/decode_slice/3: Collecting 100 samples in estimated 3.0001 s (160M iterations)
+Benchmarking bench_small_input/decode_slice/3: Analyzing
+bench_small_input/decode_slice/3
+                        time:   [18.603 ns 18.617 ns 18.632 ns]
+                        thrpt:  [153.55 MiB/s 153.68 MiB/s 153.79 MiB/s]
+                        change: [+0.0590% +0.3075% +0.5544%] (p = 0.02 < 0.05)
+                        Change within noise threshold.
+Found 6 outliers among 100 measurements (6.00%)
+  3 (3.00%) low mild
+  1 (1.00%) high mild
+  2 (2.00%) high severe
+Benchmarking bench_small_input/decode_slice/50
+Benchmarking bench_small_input/decode_slice/50: Warming up for 500.00 ms
+Benchmarking bench_small_input/decode_slice/50: Collecting 100 samples in estimated 3.0002 s (74M iterations)
+Benchmarking bench_small_input/decode_slice/50: Analyzing
+bench_small_input/decode_slice/50
+                        time:   [40.405 ns 40.410 ns 40.414 ns]
+                        thrpt:  [1.1522 GiB/s 1.1524 GiB/s 1.1525 GiB/s]
+                        change: [+1.1070% +1.2909% +1.4807%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 10 outliers among 100 measurements (10.00%)
+  7 (7.00%) high mild
+  3 (3.00%) high severe
+Benchmarking bench_small_input/decode_slice/100
+Benchmarking bench_small_input/decode_slice/100: Warming up for 500.00 ms
+Benchmarking bench_small_input/decode_slice/100: Collecting 100 samples in estimated 3.0002 s (44M iterations)
+Benchmarking bench_small_input/decode_slice/100: Analyzing
+bench_small_input/decode_slice/100
+                        time:   [67.950 ns 67.964 ns 67.980 ns]
+                        thrpt:  [1.3700 GiB/s 1.3703 GiB/s 1.3706 GiB/s]
+                        change: [+0.8278% +1.0766% +1.3111%] (p = 0.00 < 0.05)
+                        Change within noise threshold.
+Found 6 outliers among 100 measurements (6.00%)
+  3 (3.00%) high mild
+  3 (3.00%) high severe
+Benchmarking bench_small_input/decode_slice/500
+Benchmarking bench_small_input/decode_slice/500: Warming up for 500.00 ms
+Benchmarking bench_small_input/decode_slice/500: Collecting 100 samples in estimated 3.0011 s (12M iterations)
+Benchmarking bench_small_input/decode_slice/500: Analyzing
+bench_small_input/decode_slice/500
+                        time:   [257.14 ns 257.24 ns 257.35 ns]
+                        thrpt:  [1.8095 GiB/s 1.8102 GiB/s 1.8110 GiB/s]
+                        change: [-0.2574% -0.0797% +0.0549%] (p = 0.36 > 0.05)
+                        No change in performance detected.
+Found 6 outliers among 100 measurements (6.00%)
+  4 (4.00%) low mild
+  1 (1.00%) high mild
+  1 (1.00%) high severe
+Benchmarking bench_small_input/decode_slice/3072
+Benchmarking bench_small_input/decode_slice/3072: Warming up for 500.00 ms
+Benchmarking bench_small_input/decode_slice/3072: Collecting 100 samples in estimated 3.0023 s (2.0M iterations)
+Benchmarking bench_small_input/decode_slice/3072: Analyzing
+bench_small_input/decode_slice/3072
+                        time:   [1.5008 us 1.5016 us 1.5024 us]
+                        thrpt:  [1.9042 GiB/s 1.9053 GiB/s 1.9063 GiB/s]
+                        change: [+0.0616% +0.1577% +0.2567%] (p = 0.00 < 0.05)
+                        Change within noise threshold.
+Found 7 outliers among 100 measurements (7.00%)
+  1 (1.00%) low mild
+  6 (6.00%) high mild
+
+Benchmarking bench_large_input/decode/3145728
+Benchmarking bench_large_input/decode/3145728: Warming up for 500.00 ms
+Benchmarking bench_large_input/decode/3145728: Collecting 10 samples in estimated 3.0700 s (1485 iterations)
+Benchmarking bench_large_input/decode/3145728: Analyzing
+bench_large_input/decode/3145728
+                        time:   [1.8788 ms 1.8862 ms 1.8946 ms]
+                        thrpt:  [1.5463 GiB/s 1.5532 GiB/s 1.5593 GiB/s]
+                        change: [-0.4351% +0.0167% +0.4554%] (p = 0.95 > 0.05)
+                        No change in performance detected.
+Benchmarking bench_large_input/decode/10485760
+Benchmarking bench_large_input/decode/10485760: Warming up for 500.00 ms
+Benchmarking bench_large_input/decode/10485760: Collecting 10 samples in estimated 3.1533 s (440 iterations)
+Benchmarking bench_large_input/decode/10485760: Analyzing
+bench_large_input/decode/10485760
+                        time:   [6.2882 ms 6.3790 ms 6.4788 ms]
+                        thrpt:  [1.5073 GiB/s 1.5309 GiB/s 1.5530 GiB/s]
+                        change: [-0.2906% +0.7064% +1.7510%] (p = 0.25 > 0.05)
+                        No change in performance detected.
+Benchmarking bench_large_input/decode/31457280
+Benchmarking bench_large_input/decode/31457280: Warming up for 500.00 ms
+Benchmarking bench_large_input/decode/31457280: Collecting 10 samples in estimated 4.4152 s (165 iterations)
+Benchmarking bench_large_input/decode/31457280: Analyzing
+bench_large_input/decode/31457280
+                        time:   [19.651 ms 19.715 ms 19.802 ms]
+                        thrpt:  [1.4795 GiB/s 1.4860 GiB/s 1.4909 GiB/s]
+                        change: [-0.2318% +0.0754% +0.4166%] (p = 0.68 > 0.05)
+                        No change in performance detected.
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+Benchmarking bench_large_input/decode_reuse_buf/3145728
+Benchmarking bench_large_input/decode_reuse_buf/3145728: Warming up for 500.00 ms
+Benchmarking bench_large_input/decode_reuse_buf/3145728: Collecting 10 samples in estimated 3.0397 s (1815 iterations)
+Benchmarking bench_large_input/decode_reuse_buf/3145728: Analyzing
+bench_large_input/decode_reuse_buf/3145728
+                        time:   [1.5751 ms 1.5838 ms 1.5932 ms]
+                        thrpt:  [1.8388 GiB/s 1.8498 GiB/s 1.8600 GiB/s]
+                        change: [+1.3026% +1.7975% +2.3124%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Benchmarking bench_large_input/decode_reuse_buf/10485760
+Benchmarking bench_large_input/decode_reuse_buf/10485760: Warming up for 500.00 ms
+Benchmarking bench_large_input/decode_reuse_buf/10485760: Collecting 10 samples in estimated 3.0327 s (440 iterations)
+Benchmarking bench_large_input/decode_reuse_buf/10485760: Analyzing
+bench_large_input/decode_reuse_buf/10485760
+                        time:   [5.9688 ms 6.0253 ms 6.0763 ms]
+                        thrpt:  [1.6072 GiB/s 1.6208 GiB/s 1.6361 GiB/s]
+                        change: [-1.6126% -0.7921% +0.0864%] (p = 0.10 > 0.05)
+                        No change in performance detected.
+Benchmarking bench_large_input/decode_reuse_buf/31457280
+Benchmarking bench_large_input/decode_reuse_buf/31457280: Warming up for 500.00 ms
+Benchmarking bench_large_input/decode_reuse_buf/31457280: Collecting 10 samples in estimated 4.0492 s (165 iterations)
+Benchmarking bench_large_input/decode_reuse_buf/31457280: Analyzing
+bench_large_input/decode_reuse_buf/31457280
+                        time:   [16.905 ms 16.925 ms 16.967 ms]
+                        thrpt:  [1.7267 GiB/s 1.7310 GiB/s 1.7330 GiB/s]
+                        change: [-8.5942% -7.7283% -6.6498%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high severe
+Benchmarking bench_large_input/decode_slice/3145728
+Benchmarking bench_large_input/decode_slice/3145728: Warming up for 500.00 ms
+Benchmarking bench_large_input/decode_slice/3145728: Collecting 10 samples in estimated 3.0060 s (1760 iterations)
+Benchmarking bench_large_input/decode_slice/3145728: Analyzing
+bench_large_input/decode_slice/3145728
+                        time:   [1.6106 ms 1.6148 ms 1.6188 ms]
+                        thrpt:  [1.8098 GiB/s 1.8143 GiB/s 1.8191 GiB/s]
+                        change: [-0.5769% -0.4415% -0.2902%] (p = 0.00 < 0.05)
+                        Change within noise threshold.
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+Benchmarking bench_large_input/decode_slice/10485760
+Benchmarking bench_large_input/decode_slice/10485760: Warming up for 500.00 ms
+Benchmarking bench_large_input/decode_slice/10485760: Collecting 10 samples in estimated 3.2693 s (495 iterations)
+Benchmarking bench_large_input/decode_slice/10485760: Analyzing
+bench_large_input/decode_slice/10485760
+                        time:   [5.6436 ms 5.7298 ms 5.7777 ms]
+                        thrpt:  [1.6902 GiB/s 1.7044 GiB/s 1.7304 GiB/s]
+                        change: [-0.3915% +0.4896% +1.3800%] (p = 0.34 > 0.05)
+                        No change in performance detected.
+Benchmarking bench_large_input/decode_slice/31457280
+Benchmarking bench_large_input/decode_slice/31457280: Warming up for 500.00 ms
+Benchmarking bench_large_input/decode_slice/31457280: Collecting 10 samples in estimated 3.7905 s (165 iterations)
+Benchmarking bench_large_input/decode_slice/31457280: Analyzing
+bench_large_input/decode_slice/31457280
+                        time:   [15.127 ms 15.136 ms 15.145 ms]
+                        thrpt:  [1.9344 GiB/s 1.9356 GiB/s 1.9367 GiB/s]
+                        change: [-0.2875% -0.2427% -0.1966%] (p = 0.00 < 0.05)
+                        Change within noise threshold.
+
