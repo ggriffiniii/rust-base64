@@ -63,6 +63,7 @@ fn roundtrip_random_config(
         }
 
         encode_config_buf(&input_buf, config, &mut encoded_buf);
+        println!("{:?}", encoded_buf);
 
         assert_encode_sanity(&encoded_buf, &config, input_len);
 
