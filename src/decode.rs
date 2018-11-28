@@ -1,7 +1,7 @@
 use byteorder::{BigEndian, ByteOrder};
 use {tables, CharacterSet, Config, STANDARD};
 
-use std::{error, fmt, str};
+use std::{error, fmt, ops::Range, str};
 
 // decode logic operates on chunks of 8 input bytes without padding
 const INPUT_CHUNK_LEN: usize = 8;
@@ -143,12 +143,38 @@ pub fn decode_config_buf<T: ?Sized + AsRef<[u8]>>(
     let bytes_written;
     {
         let buffer_slice = &mut buffer.as_mut_slice()[starting_output_len..];
-        bytes_written = decode_helper(input_bytes, num_chunks, config.char_set, buffer_slice)?;
+        bytes_written = decode_config_slice(input_bytes, config, buffer_slice)?;
     }
 
     buffer.truncate(starting_output_len + bytes_written);
 
     Ok(())
+}
+
+/// Return the number of input chunks (including a possibly partial final chunk) in the input
+fn num_chunks(input: &[u8]) -> usize {
+    input
+        .len()
+        .checked_add(INPUT_CHUNK_LEN - 1)
+        .expect("Overflow when calculating number of chunks in input")
+        / INPUT_CHUNK_LEN
+}
+
+trait UsizeRangeExt {
+    fn advance(self, step: usize) -> Range<usize>;
+    fn is_within(&self, &[u8]) -> bool;
+}
+
+impl UsizeRangeExt for Range<usize> {
+    #[inline]
+    fn advance(self, step: usize) -> Range<usize> {
+        self.start + step .. self.end + step
+    }
+
+    #[inline]
+    fn is_within(&self, s: &[u8]) -> bool {
+        self.end <= s.len()
+    }
 }
 
 /// Decode the input into the provided output slice.
@@ -165,134 +191,77 @@ pub fn decode_config_slice<T: ?Sized + AsRef<[u8]>>(
     config: Config,
     output: &mut [u8],
 ) -> Result<usize, DecodeError> {
-    let input_bytes = input.as_ref();
+    let input: &[u8] = input.as_ref();
+    let decode_table = config.char_set.decode_table();
+    let (input_index, mut output_index) = {
+        // The fast decode loop does not handle padding. If the input is a multiple
+        // of INPUT_CHUNK_LEN then don't process the last chunk, otherwise ignore
+        // the trailing partial chunk.
+        let remainder_len = input.len() % INPUT_CHUNK_LEN;
+        let trailing_bytes_to_skip = match remainder_len {
+            // if input is a multiple of the chunk size, ignore the last chunk as it may have padding,
+            // and the fast decode logic cannot handle padding
+            0 => INPUT_CHUNK_LEN,
+            // 1 and 5 trailing bytes are illegal: can't decode 6 bits of input into a byte
+            1 | 5 => return Err(DecodeError::InvalidLength),
+            // Ignore the trailing partial chunk.
+            2 | 3 | 4 | 6 | 7 => remainder_len,
+            _ => unreachable!(),
+        };
+        let fast_loop_input = &input[..input.len().saturating_sub(trailing_bytes_to_skip)];
+        // Fast loop, stage 1.
+        // bulk_decode accepts a input slice that's a multiple of INPUT_CHUNK_LEN
+        // and processes it in chunks that are a multiple of INPUT_CHUNK_LEN. The
+        // corrolary is that the remaining bytes of fast_loop_input after
+        // bulk_decode is also a multiple of INPUT_CHUNK_LEN.
+        let (mut input_index, mut output_index) =
+            bulk_decode(fast_loop_input, config.char_set, output)?;
 
-    decode_helper(
-        input_bytes,
-        num_chunks(input_bytes),
-        config.char_set,
-        output,
-    )
-}
+        // Fast loop, stage 2 (aka still pretty fast loop)
+        // 8 bytes at a time for whatever we didn't do in stage 1.
+        let mut input_range = input_index..input_index + INPUT_CHUNK_LEN;
+        let mut output_range =
+            output_index..output_index + DECODED_CHUNK_LEN + DECODED_CHUNK_SUFFIX;
+        while input_range.is_within(fast_loop_input) && output_range.is_within(output) {
+            decode_chunk(
+                &fast_loop_input[input_range.clone()],
+                input_range.start,
+                decode_table,
+                &mut output[output_range.clone()],
+            )?;
 
-/// Return the number of input chunks (including a possibly partial final chunk) in the input
-fn num_chunks(input: &[u8]) -> usize {
-    input
-        .len()
-        .checked_add(INPUT_CHUNK_LEN - 1)
-        .expect("Overflow when calculating number of chunks in input")
-        / INPUT_CHUNK_LEN
-}
+            input_range = input_range.advance(INPUT_CHUNK_LEN);
+            output_range = output_range.advance(DECODED_CHUNK_LEN);
+        }
 
-/// Helper to avoid duplicating num_chunks calculation, which is costly on short inputs.
-/// Returns the number of bytes written, or an error.
-// We're on the fragile edge of compiler heuristics here. If this is not inlined, slow. If this is
-// inlined(always), a different slow. plain ol' inline makes the benchmarks happiest at the moment,
-// but this is fragile and the best setting changes with only minor code modifications.
-#[inline]
-fn decode_helper(
-    input: &[u8],
-    _num_chunks: usize,
-    char_set: CharacterSet,
-    output: &mut [u8],
-) -> Result<usize, DecodeError> {
-    let remainder_len = input.len() % INPUT_CHUNK_LEN;
+        // Stage 3
+        // It's possible when processing stage 2 that there are 8 bytes remaining in
+        // the input slice, but less than 8 bytes remaining in the output slice.
+        // Since stage 2 outputs 8 bytes (only 6 of which are valid) for every 8
+        // bytes of input, it can stop short of processing the entire
+        // fast_loop_input because the output buffer is not large enough. In this
+        // case use decode_chunk_precise which outputs precisely 6 bytes.
+        output_range = output_range.start..output_range.start + DECODED_CHUNK_LEN;
+        if input_range.is_within(fast_loop_input) {
+            decode_chunk_precise(
+                &input[input_range.clone()],
+                input_range.start,
+                decode_table,
+                &mut output[output_range.clone()],
+            )?;
+            input_range = input_range.advance(INPUT_CHUNK_LEN);
+            output_range = output_range.advance(DECODED_CHUNK_LEN);
+        }
 
-    // Because the fast decode loop writes in groups of 8 bytes (unrolled to
-    // CHUNKS_PER_FAST_LOOP_BLOCK times 8 bytes, where possible) and outputs 8 bytes at a time (of
-    // which only 6 are valid data), we need to be sure that we stop using the fast decode loop
-    // soon enough that there will always be 2 more bytes of valid data written after that loop.
-//    let trailing_bytes_to_skip = match remainder_len {
-//        // if input is a multiple of the chunk size, ignore the last chunk as it may have padding,
-//        // and the fast decode logic cannot handle padding
-//        0 => INPUT_CHUNK_LEN,
-//        // 1 and 5 trailing bytes are illegal: can't decode 6 bits of input into a byte
-//        1 | 5 => return Err(DecodeError::InvalidLength),
-//        // This will decode to one output byte, which isn't enough to overwrite the 2 extra bytes
-//        // written by the fast decode loop. So, we have to ignore both these 2 bytes and the
-//        // previous chunk.
-//        2 => INPUT_CHUNK_LEN + 2,
-//        // If this is 3 unpadded chars, then it would actually decode to 2 bytes. However, if this
-//        // is an erroneous 2 chars + 1 pad char that would decode to 1 byte, then it should fail
-//        // with an error, not panic from going past the bounds of the output slice, so we let it
-//        // use stage 3 + 4.
-//        3 => INPUT_CHUNK_LEN + 3,
-//        // This can also decode to one output byte because it may be 2 input chars + 2 padding
-//        // chars, which would decode to 1 byte.
-//        4 => INPUT_CHUNK_LEN + 4,
-//        // Everything else is a legal decode len (given that we don't require padding), and will
-//        // decode to at least 2 bytes of output.
-//        6 | 7 => remainder_len,
-//        _ => unreachable!(),
-//    };
-    let trailing_bytes_to_skip = match remainder_len {
-        // if input is a multiple of the chunk size, ignore the last chunk as it may have padding,
-        // and the fast decode logic cannot handle padding
-        0 => INPUT_CHUNK_LEN,
-        // 1 and 5 trailing bytes are illegal: can't decode 6 bits of input into a byte
-        1 | 5 => return Err(DecodeError::InvalidLength),
-        // This will decode to one output byte, which isn't enough to overwrite the 2 extra bytes
-        // written by the fast decode loop. So, we have to ignore both these 2 bytes and the
-        // previous chunk.
-        2 => 2,
-        // If this is 3 unpadded chars, then it would actually decode to 2 bytes. However, if this
-        // is an erroneous 2 chars + 1 pad char that would decode to 1 byte, then it should fail
-        // with an error, not panic from going past the bounds of the output slice, so we let it
-        // use stage 3 + 4.
-        3 => 3,
-        // This can also decode to one output byte because it may be 2 input chars + 2 padding
-        // chars, which would decode to 1 byte.
-        4 => 4,
-        // Everything else is a legal decode len (given that we don't require padding), and will
-        // decode to at least 2 bytes of output.
-        6 | 7 => remainder_len,
-        _ => unreachable!(),
+        // fast_loop_input has been fully processed. All that remains is the last (possibly partial) chunk.
+        debug_assert_eq!(fast_loop_input.len() - input_range.start, 0);
+        debug_assert!(
+            input.len() - input_range.start == trailing_bytes_to_skip || input.is_empty()
+        );
+        debug_assert!(input.len() - input_range.start > 1 || input.is_empty());
+        debug_assert!(input.len() - input_range.start <= 8);
+        (input_range.start, output_range.start)
     };
-    let fast_loop_input = &input[..input.len().saturating_sub(trailing_bytes_to_skip)];
-    let (mut input_index, mut output_index) = bulk_decode(fast_loop_input, char_set, output)?;
-    let decode_table = char_set.decode_table();
-
-    // Fast loop, stage 2 (aka still pretty fast loop)
-    // 8 bytes at a time for whatever we didn't do in stage 1.
-    let mut input_end_index = input_index + INPUT_CHUNK_LEN;
-    while input_end_index <= fast_loop_input.len() {
-        decode_chunk(
-            &fast_loop_input[input_index..input_end_index],
-            input_index,
-            decode_table,
-            &mut output
-                [output_index..(output_index + DECODED_CHUNK_LEN + DECODED_CHUNK_SUFFIX)],
-        )?;
-
-        output_index += DECODED_CHUNK_LEN;
-        input_index += INPUT_CHUNK_LEN;
-        input_end_index = input_index + INPUT_CHUNK_LEN;
-    }
-
-    // Stage 3
-    // If input length was such that a chunk had to be deferred until after the fast loop
-    // because decoding it would have produced 2 trailing bytes that wouldn't then be
-    // overwritten, we decode that chunk here. This way is slower but doesn't write the 2
-    // trailing bytes.
-    // However, we still need to avoid the last chunk (partial or complete) because it could
-    // have padding, so we always do 1 fewer to avoid the last chunk.
-//    if let Some(max_start_index) = input.len().checked_sub(INPUT_CHUNK_LEN + 1) {
-//        while input_index < max_start_index {
-//            decode_chunk_precise(
-//                &input[input_index..],
-//                input_index,
-//                decode_table,
-//                &mut output[output_index..(output_index + DECODED_CHUNK_LEN)],
-//            )?;
-//
-//            input_index += INPUT_CHUNK_LEN;
-//            output_index += DECODED_CHUNK_LEN;
-//        }
-//    }
-
-    // always have one more (possibly partial) block of 8 input
-    debug_assert!(input.len() - input_index > 1 || input.is_empty());
-    debug_assert!(input.len() - input_index <= 8);
 
     // Stage 4
     // Finally, decode any leftovers that aren't a complete input block of 8 bytes.
@@ -408,44 +377,41 @@ fn bulk_decode(
 ) -> Result<(usize, usize), DecodeError> {
     let decode_table = char_set.decode_table();
 
-    let mut input_index = 0;
-    let mut output_index = 0;
-    let mut input_end_index = input_index + INPUT_BLOCK_LEN;
-    //while input_end_index < input.len() && output_end_index < output.len() {
-    while input_end_index <= input.len() {
-        let input_slice = &input[input_index..input_end_index];
-        let output_slice = &mut output[output_index..output_index + DECODED_BLOCK_LEN];
+    let mut input_range = 0..INPUT_BLOCK_LEN;
+    let mut output_range = 0..DECODED_BLOCK_LEN;
+    while input_range.is_within(input) && output_range.is_within(output) {
+        let input_slice = &input[input_range.clone()];
+        let output_slice = &mut output[output_range.clone()];
 
         decode_chunk(
             &input_slice[0..],
-            input_index,
+            input_range.start,
             decode_table,
             &mut output_slice[0..],
         )?;
         decode_chunk(
             &input_slice[8..],
-            input_index + 8,
+            input_range.start + 8,
             decode_table,
             &mut output_slice[6..],
         )?;
         decode_chunk(
             &input_slice[16..],
-            input_index + 16,
+            input_range.start + 16,
             decode_table,
             &mut output_slice[12..],
         )?;
         decode_chunk(
             &input_slice[24..],
-            input_index + 24,
+            input_range.start + 24,
             decode_table,
             &mut output_slice[18..],
         )?;
 
-        input_index += INPUT_BLOCK_LEN;
-        output_index += DECODED_BLOCK_LEN - DECODED_CHUNK_SUFFIX;
-        input_end_index = input_index + INPUT_BLOCK_LEN;
+        input_range = input_range.advance(INPUT_BLOCK_LEN);
+        output_range = output_range.advance(DECODED_BLOCK_LEN - DECODED_CHUNK_SUFFIX);
     }
-    Ok((input_index, output_index))
+    Ok((input_range.start, output_range.start))
 }
 
 /// Decode 8 bytes of input into 6 bytes of output. 8 bytes of output will be written, but only the
@@ -543,195 +509,45 @@ fn decode_chunk(
 
 /// Decode an 8-byte chunk, but only write the 6 bytes actually decoded instead of including 2
 /// trailing garbage bytes.
-//#[inline]
-//fn decode_chunk_precise(
-//    input: &[u8],
-//    index_at_start_of_input: usize,
-//    decode_table: &[u8; 256],
-//    output: &mut [u8],
-//) -> Result<(), DecodeError> {
-//    let mut tmp_buf = [0_u8; 8];
-//
-//    decode_chunk(
-//        input,
-//        index_at_start_of_input,
-//        decode_table,
-//        &mut tmp_buf[..],
-//    )?;
-//
-//    output[0..6].copy_from_slice(&tmp_buf[0..6]);
-//
-//    Ok(())
-//}
+#[inline]
+fn decode_chunk_precise(
+    input: &[u8],
+    index_at_start_of_input: usize,
+    decode_table: &[u8; 256],
+    output: &mut [u8],
+) -> Result<(), DecodeError> {
+    let mut tmp_buf = [0_u8; 8];
+
+    decode_chunk(
+        input,
+        index_at_start_of_input,
+        decode_table,
+        &mut tmp_buf[..],
+    )?;
+
+    output[0..6].copy_from_slice(&tmp_buf[0..6]);
+
+    Ok(())
+}
 
 #[cfg(test)]
 mod tests {
+    use super::*;
 
-    use self::rand::distributions::{Distribution, Range};
-    use self::rand::{FromEntropy, Rng};
+    #[test]
+    fn decode_chunk_precise_writes_only_6_bytes() {
+        let input = b"Zm9vYmFy"; // "foobar"
+        let mut output = [0_u8, 1, 2, 3, 4, 5, 6, 7];
+        decode_chunk_precise(&input[..], 0, tables::STANDARD_DECODE, &mut output).unwrap();
+        assert_eq!(&vec![b'f', b'o', b'o', b'b', b'a', b'r', 6, 7], &output);
+    }
 
-//    #[test]
-//    fn decode_chunk_precise_writes_only_6_bytes() {
-//        let input = b"Zm9vYmFy"; // "foobar"
-//        let mut output = [0_u8, 1, 2, 3, 4, 5, 6, 7];
-//        decode_chunk_precise(&input[..], 0, tables::STANDARD_DECODE, &mut output).unwrap();
-//        assert_eq!(&vec![b'f', b'o', b'o', b'b', b'a', b'r', 6, 7], &output);
-//    }
-//
     #[test]
     fn decode_chunk_writes_8_bytes() {
         let input = b"Zm9vYmFy"; // "foobar"
         let mut output = [0_u8, 1, 2, 3, 4, 5, 6, 7];
         decode_chunk(&input[..], 0, tables::STANDARD_DECODE, &mut output).unwrap();
         assert_eq!(&vec![b'f', b'o', b'o', b'b', b'a', b'r', 0, 0], &output);
-    }
-
-    #[test]
-    fn decode_into_nonempty_vec_doesnt_clobber_existing_prefix() {
-        let mut orig_data = Vec::new();
-        let mut encoded_data = String::new();
-        let mut decoded_with_prefix = Vec::new();
-        let mut decoded_without_prefix = Vec::new();
-        let mut prefix = Vec::new();
-
-        let prefix_len_range = Range::new(0, 1000);
-        let input_len_range = Range::new(0, 1000);
-
-        let mut rng = rand::rngs::SmallRng::from_entropy();
-
-        for _ in 0..10_000 {
-            orig_data.clear();
-            encoded_data.clear();
-            decoded_with_prefix.clear();
-            decoded_without_prefix.clear();
-            prefix.clear();
-
-            let input_len = input_len_range.sample(&mut rng);
-
-            for _ in 0..input_len {
-                orig_data.push(rng.gen());
-            }
-
-            let config = random_config(&mut rng);
-            encode_config_buf(&orig_data, config, &mut encoded_data);
-            assert_encode_sanity(&encoded_data, config, input_len);
-
-            let prefix_len = prefix_len_range.sample(&mut rng);
-
-            // fill the buf with a prefix
-            for _ in 0..prefix_len {
-                prefix.push(rng.gen());
-            }
-
-            decoded_with_prefix.resize(prefix_len, 0);
-            decoded_with_prefix.copy_from_slice(&prefix);
-
-            // decode into the non-empty buf
-            decode_config_buf(&encoded_data, config, &mut decoded_with_prefix).unwrap();
-            // also decode into the empty buf
-            decode_config_buf(&encoded_data, config, &mut decoded_without_prefix).unwrap();
-
-            assert_eq!(
-                prefix_len + decoded_without_prefix.len(),
-                decoded_with_prefix.len()
-            );
-            assert_eq!(orig_data, decoded_without_prefix);
-
-            // append plain decode onto prefix
-            prefix.append(&mut decoded_without_prefix);
-
-            assert_eq!(prefix, decoded_with_prefix);
-        }
-    }
-
-    #[test]
-    fn decode_into_slice_doesnt_clobber_existing_prefix_or_suffix() {
-        let mut orig_data = Vec::new();
-        let mut encoded_data = String::new();
-        let mut decode_buf = Vec::new();
-        let mut decode_buf_copy: Vec<u8> = Vec::new();
-
-        let input_len_range = Range::new(0, 1000);
-
-        let mut rng = rand::rngs::SmallRng::from_entropy();
-
-        for _ in 0..10_000 {
-            orig_data.clear();
-            encoded_data.clear();
-            decode_buf.clear();
-            decode_buf_copy.clear();
-
-            let input_len = input_len_range.sample(&mut rng);
-
-            for _ in 0..input_len {
-                orig_data.push(rng.gen());
-            }
-
-            let config = random_config(&mut rng);
-            encode_config_buf(&orig_data, config, &mut encoded_data);
-            assert_encode_sanity(&encoded_data, config, input_len);
-
-            // fill the buffer with random garbage, long enough to have some room before and after
-            for _ in 0..5000 {
-                decode_buf.push(rng.gen());
-            }
-
-            // keep a copy for later comparison
-            decode_buf_copy.extend(decode_buf.iter());
-
-            let offset = 1000;
-
-            // decode into the non-empty buf
-            let decode_bytes_written =
-                decode_config_slice(&encoded_data, config, &mut decode_buf[offset..]).unwrap();
-
-            assert_eq!(orig_data.len(), decode_bytes_written);
-            assert_eq!(
-                orig_data,
-                &decode_buf[offset..(offset + decode_bytes_written)]
-            );
-            assert_eq!(&decode_buf_copy[0..offset], &decode_buf[0..offset]);
-            assert_eq!(
-                &decode_buf_copy[offset + decode_bytes_written..],
-                &decode_buf[offset + decode_bytes_written..]
-            );
-        }
-    }
-
-    #[test]
-    fn decode_into_slice_fits_in_precisely_sized_slice() {
-        let mut orig_data = Vec::new();
-        let mut encoded_data = String::new();
-        let mut decode_buf = Vec::new();
-
-        let input_len_range = Range::new(0, 1000);
-
-        let mut rng = rand::rngs::SmallRng::from_entropy();
-
-        for _ in 0..10_000 {
-            orig_data.clear();
-            encoded_data.clear();
-            decode_buf.clear();
-
-            let input_len = input_len_range.sample(&mut rng);
-
-            for _ in 0..input_len {
-                orig_data.push(rng.gen());
-            }
-
-            let config = random_config(&mut rng);
-            encode_config_buf(&orig_data, config, &mut encoded_data);
-            assert_encode_sanity(&encoded_data, config, input_len);
-
-            decode_buf.resize(input_len, 0);
-
-            // decode into the non-empty buf
-            let decode_bytes_written =
-                decode_config_slice(&encoded_data, config, &mut decode_buf[..]).unwrap();
-
-            assert_eq!(orig_data.len(), decode_bytes_written);
-            assert_eq!(orig_data, decode_buf);
-        }
     }
 
     #[test]
