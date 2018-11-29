@@ -690,10 +690,11 @@ mod avx2 {
                     2, 1, 0, 6, 5, 4, 10, 9, 8, 14, 13, 12, -1, -1, -1, -1,
                     2, 1, 0, 6, 5, 4, 10, 9, 8, 14, 13, 12, -1, -1, -1, -1),
             );
+            data = _mm256_permutevar8x32_epi32(data, _mm256_setr_epi32(0, 1, 2, 4, 5, 6, -1, -1));
             #[cfg_attr(feature = "cargo-clippy", allow(cast_ptr_alignment))]
             _mm256_storeu_si256(output.as_mut_ptr().add(output_range.start) as *mut __m256i, data);
             input_range = input_range.advance(REGISTER_BYTES);
-            output_range = output_range.advance(12);
+            output_range = output_range.advance(24);
         }
         (input_range.start, output_range.start)
     }
