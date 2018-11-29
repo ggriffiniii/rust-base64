@@ -375,10 +375,23 @@ fn bulk_decode(
     char_set: CharacterSet,
     output: &mut [u8],
 ) -> Result<(usize, usize), DecodeError> {
+    #[cfg(all(
+        feature = "simd",
+        any(target_arch = "x86", target_arch = "x86_64")
+    ))]
+    let (input_index, output_index) = {
+        if input.len() >= avx2::REGISTER_BYTES && is_x86_feature_detected!("avx2") {
+            unsafe { avx2::bulk_decode(input, char_set, output) }
+        } else if input.len() >= sse::REGISTER_BYTES && is_x86_feature_detected!("sse") {
+            unsafe { sse::bulk_decode(input, char_set, output) }
+        } else {
+            (0, 0)
+        }
+    };
     let decode_table = char_set.decode_table();
 
-    let mut input_range = 0..INPUT_BLOCK_LEN;
-    let mut output_range = 0..DECODED_BLOCK_LEN;
+    let mut input_range = input_index..input_index+INPUT_BLOCK_LEN;
+    let mut output_range = output_index..output_index+DECODED_BLOCK_LEN;
     while input_range.is_within(input) && output_range.is_within(output) {
         let input_slice = &input[input_range.clone()];
         let output_slice = &mut output[output_range.clone()];
@@ -528,6 +541,214 @@ fn decode_chunk_precise(
     output[0..6].copy_from_slice(&tmp_buf[0..6]);
 
     Ok(())
+}
+
+#[cfg(all(
+    feature = "simd",
+    any(target_arch = "x86", target_arch = "x86_64")
+))]
+mod sse {
+    pub(super) const REGISTER_BYTES: usize = 16;
+
+    use super::{CharacterSet, UsizeRangeExt};
+    #[cfg(target_arch = "x86")]
+    use std::arch::x86::*;
+    #[cfg(target_arch = "x86_64")]
+    use std::arch::x86_64::*;
+
+    #[inline]
+    #[target_feature(enable = "sse")]
+    pub(super) unsafe fn bulk_decode(
+        input: &[u8],
+        char_set: CharacterSet,
+        output: &mut [u8],
+    ) -> (usize, usize) {
+        let mut input_range = 0..REGISTER_BYTES;
+        let mut output_range = 0..REGISTER_BYTES;
+        while input_range.is_within(input) && output_range.is_within(output) {
+            #[cfg_attr(feature = "cargo-clippy", allow(cast_ptr_alignment))]
+            let mut data = _mm_loadu_si128(input.as_ptr().add(input_range.start) as *const __m128i);
+
+            let translate_result = match char_set {
+                CharacterSet::Standard => translate_mm128i_standard(data),
+                CharacterSet::UrlSafe => translate_mm128i_urlsafe(data),
+                CharacterSet::Crypt => translate_mm128i_crypt(data),
+            };
+            data = match translate_result {
+                Ok(data) => data,
+                Err(_) => {
+                    println!("error");
+                    return (input_range.start, output_range.start)
+                },
+            };
+
+            data = _mm_maddubs_epi16(data, _mm_set1_epi32(0x01400140));
+            data = _mm_madd_epi16(data, _mm_set1_epi32(0x00011000));
+            data = _mm_shuffle_epi8(
+                data,
+                _mm_setr_epi8(2, 1, 0, 6, 5, 4, 10, 9, 8, 14, 13, 12, -1, -1, -1, -1),
+            );
+            #[cfg_attr(feature = "cargo-clippy", allow(cast_ptr_alignment))]
+            _mm_storeu_si128(output.as_mut_ptr().add(output_range.start) as *mut __m128i, data);
+            input_range = input_range.advance(REGISTER_BYTES);
+            output_range = output_range.advance(12);
+        }
+        (input_range.start, output_range.start)
+    }
+
+    #[inline]
+    #[target_feature(enable = "sse")]
+    unsafe fn translate_mm128i_standard(input: __m128i) -> Result<__m128i, ()> {
+        let lut_lo = _mm_setr_epi8(
+		0x15, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11,
+		0x11, 0x11, 0x13, 0x1A, 0x1B, 0x1B, 0x1B, 0x1A);
+
+	    let lut_hi = _mm_setr_epi8(
+		0x10, 0x10, 0x01, 0x02, 0x04, 0x08, 0x04, 0x08,
+		0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10);
+
+	    let lut_roll = _mm_setr_epi8(
+		0,  16,  19,   4, -65, -65, -71, -71,
+		0,   0,   0,   0,   0,   0,   0,   0);
+
+	    let mask_slash = _mm_set1_epi8(b'/' as i8);
+
+        let hi_nibbles  = _mm_and_si128(_mm_srli_epi32(input, 4), mask_slash);
+        let lo_nibbles  = _mm_and_si128(input, mask_slash);
+        let hi          = _mm_shuffle_epi8(lut_hi, hi_nibbles);
+        let lo          = _mm_shuffle_epi8(lut_lo, lo_nibbles);
+        let eq_slash       = _mm_cmpeq_epi8(input, mask_slash);
+        let roll        = _mm_shuffle_epi8(lut_roll, _mm_add_epi8(eq_slash, hi_nibbles));
+
+        // Check for invalid input: if any "and" values from lo and hi are not zero,
+        // fall back on bytewise code to do error checking and reporting:
+        if _mm_movemask_epi8(_mm_cmpgt_epi8(_mm_and_si128(lo, hi), _mm_set1_epi8(0))) != 0 {
+            return Err(())
+        }
+
+        // Now simply add the delta values to the input:
+        Ok(_mm_add_epi8(input, roll))
+    }
+
+    #[inline]
+    #[target_feature(enable = "sse")]
+    unsafe fn translate_mm128i_urlsafe(input: __m128i) -> Result<__m128i, ()> {
+        Ok(input)
+    }
+
+    #[inline]
+    #[target_feature(enable = "sse")]
+    unsafe fn translate_mm128i_crypt(input: __m128i) -> Result<__m128i, ()> {
+        Ok(input)
+    }
+}
+
+#[cfg(all(
+    feature = "simd",
+    any(target_arch = "x86", target_arch = "x86_64")
+))]
+mod avx2 {
+    pub(super) const REGISTER_BYTES: usize = 32;
+
+    use super::{CharacterSet, UsizeRangeExt};
+    #[cfg(target_arch = "x86")]
+    use std::arch::x86::*;
+    #[cfg(target_arch = "x86_64")]
+    use std::arch::x86_64::*;
+
+    #[inline]
+    #[target_feature(enable = "avx2")]
+    pub(super) unsafe fn bulk_decode(
+        input: &[u8],
+        char_set: CharacterSet,
+        output: &mut [u8],
+    ) -> (usize, usize) {
+        let mut input_range = 0..REGISTER_BYTES;
+        let mut output_range = 0..REGISTER_BYTES;
+        while input_range.is_within(input) && output_range.is_within(output) {
+            #[cfg_attr(feature = "cargo-clippy", allow(cast_ptr_alignment))]
+            let mut data = _mm256_loadu_si256(input.as_ptr().add(input_range.start) as *const __m256i);
+
+            let translate_result = match char_set {
+                CharacterSet::Standard => translate_mm256i_standard(data),
+                CharacterSet::UrlSafe => translate_mm256i_urlsafe(data),
+                CharacterSet::Crypt => translate_mm256i_crypt(data),
+            };
+            data = match translate_result {
+                Ok(data) => data,
+                Err(_) => {
+                    println!("error");
+                    return (input_range.start, output_range.start)
+                },
+            };
+
+            data = _mm256_maddubs_epi16(data, _mm256_set1_epi32(0x01400140));
+            data = _mm256_madd_epi16(data, _mm256_set1_epi32(0x00011000));
+            data = _mm256_shuffle_epi8(
+                data,
+                _mm256_setr_epi8(
+                    2, 1, 0, 6, 5, 4, 10, 9, 8, 14, 13, 12, -1, -1, -1, -1,
+                    2, 1, 0, 6, 5, 4, 10, 9, 8, 14, 13, 12, -1, -1, -1, -1),
+            );
+            #[cfg_attr(feature = "cargo-clippy", allow(cast_ptr_alignment))]
+            _mm256_storeu_si256(output.as_mut_ptr().add(output_range.start) as *mut __m256i, data);
+            input_range = input_range.advance(REGISTER_BYTES);
+            output_range = output_range.advance(12);
+        }
+        (input_range.start, output_range.start)
+    }
+
+    #[inline]
+    #[target_feature(enable = "avx2")]
+    unsafe fn translate_mm256i_standard(input: __m256i) -> Result<__m256i, ()> {
+        let lut_lo = _mm256_setr_epi8(
+		0x15, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11,
+		0x11, 0x11, 0x13, 0x1A, 0x1B, 0x1B, 0x1B, 0x1A,
+		0x15, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11,
+		0x11, 0x11, 0x13, 0x1A, 0x1B, 0x1B, 0x1B, 0x1A);
+
+	    let lut_hi = _mm256_setr_epi8(
+		0x10, 0x10, 0x01, 0x02, 0x04, 0x08, 0x04, 0x08,
+		0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10,
+		0x10, 0x10, 0x01, 0x02, 0x04, 0x08, 0x04, 0x08,
+		0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10);
+
+	    let lut_roll = _mm256_setr_epi8(
+		0,  16,  19,   4, -65, -65, -71, -71,
+		0,   0,   0,   0,   0,   0,   0,   0,
+		0,  16,  19,   4, -65, -65, -71, -71,
+		0,   0,   0,   0,   0,   0,   0,   0);
+
+	    let mask_slash = _mm256_set1_epi8(b'/' as i8);
+
+        let hi_nibbles  = _mm256_and_si256(_mm256_srli_epi32(input, 4), mask_slash);
+        let lo_nibbles  = _mm256_and_si256(input, mask_slash);
+        let hi          = _mm256_shuffle_epi8(lut_hi, hi_nibbles);
+        let lo          = _mm256_shuffle_epi8(lut_lo, lo_nibbles);
+        let eq_slash       = _mm256_cmpeq_epi8(input, mask_slash);
+        let roll        = _mm256_shuffle_epi8(lut_roll, _mm256_add_epi8(eq_slash, hi_nibbles));
+
+        // Check for invalid input: if any "and" values from lo and hi are not zero,
+        // fall back on bytewise code to do error checking and reporting:
+        if _mm256_testz_si256(lo, hi) == 0 {
+            return Err(())
+        }
+
+        // Now simply add the delta values to the input:
+        Ok(_mm256_add_epi8(input, roll))
+    }
+
+    #[inline]
+    #[target_feature(enable = "avx2")]
+    unsafe fn translate_mm256i_urlsafe(input: __m256i) -> Result<__m256i, ()> {
+        Ok(input)
+    }
+
+    #[inline]
+    #[target_feature(enable = "avx2")]
+    unsafe fn translate_mm256i_crypt(input: __m256i) -> Result<__m256i, ()> {
+        Ok(input)
+    }
 }
 
 #[cfg(test)]
