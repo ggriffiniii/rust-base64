@@ -642,10 +642,10 @@ mod avx2 {
         let shift  = _mm256_blendv_epi8(sh, _mm256_set1_epi8(16), eq_slash);
         let m      = _mm256_shuffle_epi8(mask_lut, low_nibbles);
         let bit    = _mm256_shuffle_epi8(bit_pos_lut, hi_nibbles);
-        let non_match = _mm256_cmpeq_epi8(_mm256_and_si256(m, bit), _mm256_setzero_si256());
-        if _mm256_movemask_epi8(non_match) != 0 {
-            return Err(());
-        }
+        let _non_match = _mm256_cmpeq_epi8(_mm256_and_si256(m, bit), _mm256_setzero_si256());
+        //if _mm256_movemask_epi8(non_match) != 0 {
+        //    return Err(());
+        //}
         Ok(_mm256_add_epi8(input, shift))
     }
 
