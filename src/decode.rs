@@ -568,9 +568,8 @@ mod avx2 {
             let mut data = _mm256_loadu_si256(input.as_ptr().add(input_range.start) as *const __m256i);
 
             let translate_result = match char_set {
-                //CharacterSet::Standard => translate_mm256i_standard(data),
-                CharacterSet::Standard => translate_mm256i_urlsafe(data),
-                CharacterSet::UrlSafe => translate_mm256i_standard(data),
+                CharacterSet::Standard => translate_mm256i_standard(data),
+                CharacterSet::UrlSafe => translate_mm256i_urlsafe(data),
                 CharacterSet::Crypt => translate_mm256i_crypt(data),
             };
             data = match translate_result {
