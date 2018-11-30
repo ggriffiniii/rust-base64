@@ -575,7 +575,10 @@ mod avx2 {
             data = match translate_result {
                 Ok(data) => data,
                 Err(_) => {
-                    println!("error");
+                    // There was an error decoding this chunk. Return that we
+                    // were only able to decode up to the beginning of the
+                    // current range. The non-avx fallback will find and report
+                    // the error.
                     return (input_range.start, output_range.start)
                 },
             };
@@ -601,15 +604,6 @@ mod avx2 {
     #[target_feature(enable = "avx2")]
     #[allow(overflowing_literals)]
     unsafe fn translate_mm256i_standard(input: __m256i) -> Result<__m256i, ()> {
-        let hi_nibbles = _mm256_and_si256(_mm256_srli_epi32(input, 4), _mm256_set1_epi8(0x0f));
-        let low_nibbles = _mm256_and_si256(input, _mm256_set1_epi8(0x0f));
-        let shift_lut = _mm256_setr_epi8(
-            0,   0,  19,   4, -65, -65, -71, -71,
-            0,   0,   0,   0,   0,   0,   0,   0,
-            0,   0,  19,   4, -65, -65, -71, -71,
-            0,   0,   0,   0,   0,   0,   0,   0
-        );
-        
         let mask_lut = _mm256_setr_epi8(
         /* 0        */ 0b10101000,
         /* 1 .. 9   */ 0b11111000, 0b11111000, 0b11111000, 0b11111000,
@@ -637,15 +631,25 @@ mod avx2 {
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
         );
 
-        let sh = _mm256_shuffle_epi8(shift_lut,  hi_nibbles);
-        let eq_slash  = _mm256_cmpeq_epi8(input, _mm256_set1_epi8(b'/' as i8));
-        let shift  = _mm256_blendv_epi8(sh, _mm256_set1_epi8(16), eq_slash);
+        let hi_nibbles = _mm256_and_si256(_mm256_srli_epi32(input, 4), _mm256_set1_epi8(0x0f));
+        let low_nibbles = _mm256_and_si256(input, _mm256_set1_epi8(0x0f));
         let m      = _mm256_shuffle_epi8(mask_lut, low_nibbles);
         let bit    = _mm256_shuffle_epi8(bit_pos_lut, hi_nibbles);
         let non_match = _mm256_cmpeq_epi8(_mm256_and_si256(m, bit), _mm256_setzero_si256());
         if _mm256_movemask_epi8(non_match) != 0 {
             return Err(());
         }
+
+        let shift_lut = _mm256_setr_epi8(
+            0,   0,  19,   4, -65, -65, -71, -71,
+            0,   0,   0,   0,   0,   0,   0,   0,
+            0,   0,  19,   4, -65, -65, -71, -71,
+            0,   0,   0,   0,   0,   0,   0,   0
+        );
+
+        let sh = _mm256_shuffle_epi8(shift_lut,  hi_nibbles);
+        let eq_slash  = _mm256_cmpeq_epi8(input, _mm256_set1_epi8(b'/' as i8));
+        let shift  = _mm256_blendv_epi8(sh, _mm256_set1_epi8(16), eq_slash);
         Ok(_mm256_add_epi8(input, shift))
     }
 
@@ -653,15 +657,6 @@ mod avx2 {
     #[target_feature(enable = "avx2")]
     #[allow(overflowing_literals)]
     unsafe fn translate_mm256i_urlsafe(input: __m256i) -> Result<__m256i, ()> {
-        let hi_nibbles = _mm256_and_si256(_mm256_srli_epi32(input, 4), _mm256_set1_epi8(0x0f));
-        let low_nibbles = _mm256_and_si256(input, _mm256_set1_epi8(0x0f));
-        let shift_lut = _mm256_setr_epi8(
-            0,   0,  17,   4, -65, -65, -71, -71,
-            0,   0,   0,   0,   0,   0,   0,   0,
-            0,   0,  17,   4, -65, -65, -71, -71,
-            0,   0,   0,   0,   0,   0,   0,   0
-        );
-        
         let mask_lut = _mm256_setr_epi8(
         /* 0        */ 0b10101000,
         /* 1 .. 9   */ 0b11111000, 0b11111000, 0b11111000, 0b11111000,
@@ -691,15 +686,25 @@ mod avx2 {
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
         );
 
-        let sh = _mm256_shuffle_epi8(shift_lut,  hi_nibbles);
-        let eq_underscore  = _mm256_cmpeq_epi8(input, _mm256_set1_epi8(b'_' as i8));
-        let shift  = _mm256_blendv_epi8(sh, _mm256_set1_epi8(-32), eq_underscore);
+        let hi_nibbles = _mm256_and_si256(_mm256_srli_epi32(input, 4), _mm256_set1_epi8(0x0f));
+        let low_nibbles = _mm256_and_si256(input, _mm256_set1_epi8(0x0f));
         let m      = _mm256_shuffle_epi8(mask_lut, low_nibbles);
         let bit    = _mm256_shuffle_epi8(bit_pos_lut, hi_nibbles);
         let non_match = _mm256_cmpeq_epi8(_mm256_and_si256(m, bit), _mm256_setzero_si256());
         if _mm256_movemask_epi8(non_match) != 0 {
             return Err(());
         }
+
+        let shift_lut = _mm256_setr_epi8(
+            0,   0,  17,   4, -65, -65, -71, -71,
+            0,   0,   0,   0,   0,   0,   0,   0,
+            0,   0,  17,   4, -65, -65, -71, -71,
+            0,   0,   0,   0,   0,   0,   0,   0
+        );
+
+        let sh = _mm256_shuffle_epi8(shift_lut,  hi_nibbles);
+        let eq_underscore  = _mm256_cmpeq_epi8(input, _mm256_set1_epi8(b'_' as i8));
+        let shift  = _mm256_blendv_epi8(sh, _mm256_set1_epi8(-32), eq_underscore);
         Ok(_mm256_add_epi8(input, shift))
     }
 
@@ -707,15 +712,6 @@ mod avx2 {
     #[target_feature(enable = "avx2")]
     #[allow(overflowing_literals)]
     unsafe fn translate_mm256i_crypt(input: __m256i) -> Result<__m256i, ()> {
-        let hi_nibbles = _mm256_and_si256(_mm256_srli_epi32(input, 4), _mm256_set1_epi8(0x0f));
-        let low_nibbles = _mm256_and_si256(input, _mm256_set1_epi8(0x0f));
-        let shift_lut = _mm256_setr_epi8(
-            0,   0, -46, -46, -53, -53, -59, -59,
-            0,   0,   0,   0,   0,   0,   0,   0,
-            0,   0, -46, -46, -53, -53, -59, -59,
-            0,   0,   0,   0,   0,   0,   0,   0
-        );
-        
         let mask_lut = _mm256_setr_epi8(
         /* 0        */ 0b10101000,
         /* 1 .. 9   */ 0b11111000, 0b11111000, 0b11111000, 0b11111000,
@@ -741,13 +737,22 @@ mod avx2 {
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
         );
 
-        let sh = _mm256_shuffle_epi8(shift_lut,  hi_nibbles);
+        let hi_nibbles = _mm256_and_si256(_mm256_srli_epi32(input, 4), _mm256_set1_epi8(0x0f));
+        let low_nibbles = _mm256_and_si256(input, _mm256_set1_epi8(0x0f));
         let m      = _mm256_shuffle_epi8(mask_lut, low_nibbles);
         let bit    = _mm256_shuffle_epi8(bit_pos_lut, hi_nibbles);
         let non_match = _mm256_cmpeq_epi8(_mm256_and_si256(m, bit), _mm256_setzero_si256());
         if _mm256_movemask_epi8(non_match) != 0 {
             return Err(());
         }
+
+        let shift_lut = _mm256_setr_epi8(
+            0,   0, -46, -46, -53, -53, -59, -59,
+            0,   0,   0,   0,   0,   0,   0,   0,
+            0,   0, -46, -46, -53, -53, -59, -59,
+            0,   0,   0,   0,   0,   0,   0,   0
+        );
+        let sh = _mm256_shuffle_epi8(shift_lut,  hi_nibbles);
         Ok(_mm256_add_epi8(input, sh))
     }
 }
