@@ -705,8 +705,50 @@ mod avx2 {
 
     #[inline]
     #[target_feature(enable = "avx2")]
+    #[allow(overflowing_literals)]
     unsafe fn translate_mm256i_crypt(input: __m256i) -> Result<__m256i, ()> {
-        Ok(input)
+        let hi_nibbles = _mm256_and_si256(_mm256_srli_epi32(input, 4), _mm256_set1_epi8(0x0f));
+        let low_nibbles = _mm256_and_si256(input, _mm256_set1_epi8(0x0f));
+        let shift_lut = _mm256_setr_epi8(
+            0,   0,  -46,   -46, -53, -53, -69, -69,
+            0,   0,   0,   0,   0,   0,   0,   0,
+            0,   0,  -46,   -46, -53, -53, -69, -69,
+            0,   0,   0,   0,   0,   0,   0,   0
+        );
+        
+        let mask_lut = _mm256_setr_epi8(
+        /* 0        */ 0b10101000,
+        /* 1 .. 9   */ 0b11111000, 0b11111000, 0b11111000, 0b11111000,
+                       0b11111000, 0b11111000, 0b11111000, 0b11111000,
+                       0b11111000,
+        /* 10       */ 0b11110000,
+        /* 11 .. 13 */ 0b01010000, 0b01010000, 0b01010000,
+        /* 14 .. 15 */ 0b01010100, 0b01010100,
+
+        /* 0        */ 0b10101000,
+        /* 1 .. 9   */ 0b11111000, 0b11111000, 0b11111000, 0b11111000,
+                       0b11111000, 0b11111000, 0b11111000, 0b11111000,
+                       0b11111000,
+        /* 10       */ 0b11110000,
+        /* 11 .. 13 */ 0b01010000, 0b01010000, 0b01010000,
+        /* 14 .. 15 */ 0b01010100, 0b01010100
+        );
+
+        let bit_pos_lut = _mm256_setr_epi8(
+            0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+        );
+
+        let sh = _mm256_shuffle_epi8(shift_lut,  hi_nibbles);
+        let m      = _mm256_shuffle_epi8(mask_lut, low_nibbles);
+        let bit    = _mm256_shuffle_epi8(bit_pos_lut, hi_nibbles);
+        let non_match = _mm256_cmpeq_epi8(_mm256_and_si256(m, bit), _mm256_setzero_si256());
+        if _mm256_movemask_epi8(non_match) != 0 {
+            return Err(());
+        }
+        Ok(_mm256_add_epi8(input, sh))
     }
 }
 

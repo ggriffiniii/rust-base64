@@ -24,7 +24,7 @@ impl Arbitrary for ArbitraryConfig {
         const CHARSETS: &[CharacterSet] = &[
             CharacterSet::UrlSafe,
             CharacterSet::Standard,
-            //CharacterSet::Crypt,
+            CharacterSet::Crypt,
         ];
         let charset = *g.choose(CHARSETS).unwrap();
 
