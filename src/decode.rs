@@ -601,7 +601,7 @@ mod avx2 {
     #[target_feature(enable = "avx2")]
     #[allow(overflowing_literals)]
     unsafe fn translate_mm256i_standard(input: __m256i) -> Result<__m256i, ()> {
-        let hi_nibbles = _mm256_srli_epi32(input, 4);
+        let hi_nibbles = _mm256_and_si256(_mm256_srli_epi32(input, 4), _mm256_set1_epi8(0x0f));
         let low_nibbles = _mm256_and_si256(input, _mm256_set1_epi8(0x0f));
         let shift_lut = _mm256_setr_epi8(
             0,   0,  19,   4, -65, -65, -71, -71,
