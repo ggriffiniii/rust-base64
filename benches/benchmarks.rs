@@ -5,8 +5,8 @@ extern crate rand;
 
 use base64::display;
 use base64::{
-    decode, decode_config_buf, decode_config_slice, encode, encode_config_buf, encode_config_slice,
-    write, Config,
+    decode_config, decode_config_buf, decode_config_slice, encode_config, encode_config_buf,
+    encode_config_slice, write, Config,
 };
 
 use criterion::{black_box, Bencher, Criterion, ParameterizedBenchmark, Throughput};
@@ -18,10 +18,10 @@ const TEST_CONFIG: Config = base64::STANDARD;
 fn do_decode_bench(b: &mut Bencher, &size: &usize) {
     let mut v: Vec<u8> = Vec::with_capacity(size * 3 / 4);
     fill(&mut v);
-    let encoded = encode(&v);
+    let encoded = encode_config(&v, TEST_CONFIG);
 
     b.iter(|| {
-        let orig = decode(&encoded);
+        let orig = decode_config(&encoded, TEST_CONFIG);
         black_box(&orig);
     });
 }
@@ -29,7 +29,7 @@ fn do_decode_bench(b: &mut Bencher, &size: &usize) {
 fn do_decode_bench_reuse_buf(b: &mut Bencher, &size: &usize) {
     let mut v: Vec<u8> = Vec::with_capacity(size * 3 / 4);
     fill(&mut v);
-    let encoded = encode(&v);
+    let encoded = encode_config(&v, TEST_CONFIG);
 
     let mut buf = Vec::new();
     b.iter(|| {
@@ -42,7 +42,7 @@ fn do_decode_bench_reuse_buf(b: &mut Bencher, &size: &usize) {
 fn do_decode_bench_slice(b: &mut Bencher, &size: &usize) {
     let mut v: Vec<u8> = Vec::with_capacity(size * 3 / 4);
     fill(&mut v);
-    let encoded = encode(&v);
+    let encoded = encode_config(&v, TEST_CONFIG);
 
     let mut buf = Vec::new();
     buf.resize(size, 0);
@@ -56,7 +56,7 @@ fn do_encode_bench(b: &mut Bencher, &size: &usize) {
     let mut v: Vec<u8> = Vec::with_capacity(size);
     fill(&mut v);
     b.iter(|| {
-        let e = encode(&v);
+        let e = encode_config(&v, TEST_CONFIG);
         black_box(&e);
     });
 }
