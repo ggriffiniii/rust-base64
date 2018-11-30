@@ -12,7 +12,7 @@ use self::rand::Rng;
 impl Arbitrary for Config {
     fn arbitrary<G: Gen>(g: &mut G) -> Self {
         const CHARSETS: &[CharacterSet] = &[
-            //CharacterSet::UrlSafe,
+            CharacterSet::UrlSafe,
             CharacterSet::Standard,
             //CharacterSet::Crypt,
         ];

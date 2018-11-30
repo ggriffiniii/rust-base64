@@ -653,12 +653,12 @@ mod avx2 {
     #[target_feature(enable = "avx2")]
     #[allow(overflowing_literals)]
     unsafe fn translate_mm256i_urlsafe(input: __m256i) -> Result<__m256i, ()> {
-        let hi_nibbles = _mm256_srli_epi32(input, 4);
+        let hi_nibbles = _mm256_and_si256(_mm256_srli_epi32(input, 4), _mm256_set1_epi8(0x0f));
         let low_nibbles = _mm256_and_si256(input, _mm256_set1_epi8(0x0f));
         let shift_lut = _mm256_setr_epi8(
-            0,   0,  19,   4, -65, -65, -71, -71,
+            0,   0,  17,   4, -65, -65, -71, -71,
             0,   0,   0,   0,   0,   0,   0,   0,
-            0,   0,  19,   4, -65, -65, -71, -71,
+            0,   0,  17,   4, -65, -65, -71, -71,
             0,   0,   0,   0,   0,   0,   0,   0
         );
         
@@ -690,8 +690,8 @@ mod avx2 {
         );
 
         let sh = _mm256_shuffle_epi8(shift_lut,  hi_nibbles);
-        let eq_slash  = _mm256_cmpeq_epi8(input, _mm256_set1_epi8(b'/' as i8));
-        let shift  = _mm256_blendv_epi8(sh, _mm256_set1_epi8(16), eq_slash);
+        let eq_underscore  = _mm256_cmpeq_epi8(input, _mm256_set1_epi8(b'_' as i8));
+        let shift  = _mm256_blendv_epi8(sh, _mm256_set1_epi8(-32), eq_underscore);
         let m      = _mm256_shuffle_epi8(mask_lut, low_nibbles);
         let bit    = _mm256_shuffle_epi8(bit_pos_lut, hi_nibbles);
         let non_match = _mm256_cmpeq_epi8(_mm256_and_si256(m, bit), _mm256_setzero_si256());
@@ -699,42 +699,6 @@ mod avx2 {
             return Err(());
         }
         Ok(_mm256_add_epi8(input, shift))
-
-        // old
-//        let lut_lo = _mm256_setr_epi8(
-//		0x15, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11,
-//		0x11, 0x11, 0x13, 0x1A, 0x1B, 0x1B, 0x1B, 0x1A,
-//		0x15, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11,
-//		0x11, 0x11, 0x13, 0x1A, 0x1B, 0x1B, 0x1B, 0x1A);
-//
-//	    let lut_hi = _mm256_setr_epi8(
-//		0x10, 0x10, 0x01, 0x02, 0x04, 0x08, 0x04, 0x08,
-//		0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10,
-//		0x10, 0x10, 0x01, 0x02, 0x04, 0x08, 0x04, 0x08,
-//		0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10);
-//
-//	    let lut_roll = _mm256_setr_epi8(
-//		0,  -32,  19,   4, -65, -65, -71, -71,
-//		0,    0,   0,   0,   0,   0,   0,   0,
-//		0,  -32,  19,   4, -65, -65, -71, -71,
-//		0,    0,   0,   0,   0,   0,   0,   0);
-//
-//	    let mask_underscore = _mm256_set1_epi8(b'_' as i8);
-//
-//        let hi_nibbles  = _mm256_and_si256(_mm256_srli_epi32(input, 4), mask_underscore);
-//        let lo_nibbles  = _mm256_and_si256(input, mask_underscore);
-//        let hi          = _mm256_shuffle_epi8(lut_hi, hi_nibbles);
-//        let lo          = _mm256_shuffle_epi8(lut_lo, lo_nibbles);
-//        let eq_underscore       = _mm256_cmpeq_epi8(input, mask_underscore);
-//        let roll        = _mm256_shuffle_epi8(lut_roll, _mm256_add_epi8(eq_underscore, hi_nibbles));
-//
-//        if _mm256_testz_si256(lo, hi) == 0 {
-//            return Err(())
-//        }
-//
-//        // Now simply add the delta values to the input:
-//        Ok(_mm256_add_epi8(input, roll))
-//        Ok(input)
     }
 
     #[inline]
