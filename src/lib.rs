@@ -133,12 +133,14 @@ pub struct Config<C, P> where C: Copy, P: Copy {
 impl<C, P> Padding for Config<C, P> where P: Padding, C: Copy {
     const PADDING_BYTE: u8 = P::PADDING_BYTE;
 
+    #[inline]
     fn has_padding(self) -> bool {
         self.padding.has_padding()
     }
 }
 
 impl<C, P> Encoding for Config<C, P> where C: Encoding, P: Copy {
+    #[inline]
     fn encode_u6(self, input: u8) -> u8 {
         self.char_set.encode_u6(input)
     }
@@ -147,6 +149,7 @@ impl<C, P> Encoding for Config<C, P> where C: Encoding, P: Copy {
 impl<C, P> IntoBulkEncoding for Config<C, P> where C: IntoBulkEncoding, P: Copy {
     type BulkEncoding = C::BulkEncoding;
 
+    #[inline]
     fn into_bulk_encoding(self) -> Self::BulkEncoding {
         self.char_set.into_bulk_encoding()
     }
@@ -155,6 +158,7 @@ impl<C, P> IntoBulkEncoding for Config<C, P> where C: IntoBulkEncoding, P: Copy 
 impl<C, P> Decoding for Config<C, P> where C: Decoding, P: Copy {
     const INVALID_VALUE: u8 = C::INVALID_VALUE;
 
+    #[inline]
     fn decode_u8(self, input: u8) -> u8 {
         self.char_set.decode_u8(input)
     }
@@ -162,5 +166,6 @@ impl<C, P> Decoding for Config<C, P> where C: Decoding, P: Copy {
 
 pub trait BulkEncoding {
     const MIN_INPUT_BYTES: usize;
+
     fn bulk_encode(self, input: &[u8], output: &mut [u8]) -> (usize, usize);
 }
