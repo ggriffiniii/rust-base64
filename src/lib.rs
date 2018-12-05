@@ -51,7 +51,8 @@
 
 #![cfg_attr(feature = "cargo-clippy", allow(cast_lossless))]
 #![deny(
-    missing_docs,
+    // TODO: Reenable missing_docs
+    // missing_docs,
     trivial_casts,
     trivial_numeric_casts,
     unused_extern_crates,
@@ -62,6 +63,8 @@
 )]
 
 extern crate byteorder;
+#[macro_use]
+extern crate cfg_if;
 
 mod chunked_encoder;
 pub mod display;
@@ -74,86 +77,90 @@ pub use encode::{encode, encode_config, encode_config_buf, encode_config_slice};
 mod decode;
 pub use decode::{decode, decode_config, decode_config_buf, decode_config_slice, DecodeError};
 
+pub mod character_set;
+
 #[cfg(test)]
 mod tests;
 
-/// Available encoding character sets
-#[derive(Clone, Copy, Debug)]
-pub enum CharacterSet {
-    /// The standard character set (uses `+` and `/`).
-    ///
-    /// See [RFC 3548](https://tools.ietf.org/html/rfc3548#section-3).
-    Standard,
-    /// The URL safe character set (uses `-` and `_`).
-    ///
-    /// See [RFC 3548](https://tools.ietf.org/html/rfc3548#section-4).
-    UrlSafe,
-    /// The `crypt(3)` character set (uses `./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz`).
-    ///
-    /// Not standardized, but folk wisdom on the net asserts that this alphabet is what crypt uses.
-    Crypt,
+pub const STANDARD:  Config<character_set::Standard, WithPadding> = Config{char_set: character_set::Standard, padding: WithPadding};
+pub const STANDARD_NO_PAD: Config<character_set::Standard, NoPadding> = Config{char_set: character_set::Standard, padding: NoPadding};
+pub const URL_SAFE: Config<character_set::UrlSafe, WithPadding> = Config{char_set: character_set::UrlSafe, padding: WithPadding};
+pub const URL_SAFE_NO_PAD: Config<character_set::UrlSafe, NoPadding> = Config{char_set: character_set::UrlSafe, padding: NoPadding};
+pub const CRYPT: Config<character_set::Crypt, WithPadding> = Config{char_set: character_set::Crypt, padding: WithPadding};
+pub const CRYPT_NO_PAD: Config<character_set::Crypt, NoPadding> = Config{char_set: character_set::Crypt, padding: NoPadding};
+
+
+pub trait Encoding : IntoBulkEncoding + Copy
+where
+    Self: Sized,
+{
+    fn encode_u6(self, input: u8) -> u8;
 }
 
-impl CharacterSet {
-    fn encode_table(self) -> &'static [u8; 64] {
-        match self {
-            CharacterSet::Standard => tables::STANDARD_ENCODE,
-            CharacterSet::UrlSafe => tables::URL_SAFE_ENCODE,
-            CharacterSet::Crypt => tables::CRYPT_ENCODE,
-        }
+pub trait IntoBulkEncoding : Copy {
+    type BulkEncoding: BulkEncoding;
+    fn into_bulk_encoding(self) -> Self::BulkEncoding;
+}
+
+pub trait Decoding : Copy {
+    const INVALID_VALUE: u8;
+    fn decode_u8(self, input: u8) -> u8;
+}
+
+pub trait Padding : Copy {
+    const PADDING_BYTE: u8 = b'=';
+    fn has_padding(self) -> bool;
+}
+
+#[derive(Debug, Default, Clone, Copy)]
+pub struct WithPadding;
+impl Padding for WithPadding {
+    fn has_padding(self) -> bool { true }
+}
+
+#[derive(Debug, Default, Clone, Copy)]
+pub struct NoPadding;
+impl Padding for NoPadding {
+    fn has_padding(self) -> bool { false }
+}
+
+#[derive(Debug, Default, Clone, Copy)]
+pub struct Config<C, P> where C: Copy, P: Copy {
+    char_set: C,
+    padding: P,
+}
+
+impl<C, P> Padding for Config<C, P> where P: Padding, C: Copy {
+    const PADDING_BYTE: u8 = P::PADDING_BYTE;
+
+    fn has_padding(self) -> bool {
+        self.padding.has_padding()
     }
+}
 
-    fn decode_table(self) -> &'static [u8; 256] {
-        match self {
-            CharacterSet::Standard => tables::STANDARD_DECODE,
-            CharacterSet::UrlSafe => tables::URL_SAFE_DECODE,
-            CharacterSet::Crypt => tables::CRYPT_DECODE,
-        }
+impl<C, P> Encoding for Config<C, P> where C: Encoding, P: Copy {
+    fn encode_u6(self, input: u8) -> u8 {
+        self.char_set.encode_u6(input)
     }
 }
 
-/// Contains configuration parameters for base64 encoding
-#[derive(Clone, Copy, Debug)]
-pub struct Config {
-    /// Character set to use
-    char_set: CharacterSet,
-    /// True to pad output with `=` characters
-    pad: bool,
-}
+impl<C, P> IntoBulkEncoding for Config<C, P> where C: IntoBulkEncoding, P: Copy {
+    type BulkEncoding = C::BulkEncoding;
 
-impl Config {
-    /// Create a new `Config`.
-    pub fn new(char_set: CharacterSet, pad: bool) -> Config {
-        Config { char_set, pad }
+    fn into_bulk_encoding(self) -> Self::BulkEncoding {
+        self.char_set.into_bulk_encoding()
     }
 }
 
-/// Standard character set with padding.
-pub const STANDARD: Config = Config {
-    char_set: CharacterSet::Standard,
-    pad: true,
-};
+impl<C, P> Decoding for Config<C, P> where C: Decoding, P: Copy {
+    const INVALID_VALUE: u8 = C::INVALID_VALUE;
 
-/// Standard character set without padding.
-pub const STANDARD_NO_PAD: Config = Config {
-    char_set: CharacterSet::Standard,
-    pad: false,
-};
+    fn decode_u8(self, input: u8) -> u8 {
+        self.char_set.decode_u8(input)
+    }
+}
 
-/// URL-safe character set with padding
-pub const URL_SAFE: Config = Config {
-    char_set: CharacterSet::UrlSafe,
-    pad: true,
-};
-
-/// URL-safe character set without padding
-pub const URL_SAFE_NO_PAD: Config = Config {
-    char_set: CharacterSet::UrlSafe,
-    pad: false,
-};
-
-/// As per `crypt(3)` requirements
-pub const CRYPT: Config = Config {
-    char_set: CharacterSet::Crypt,
-    pad: false,
-};
+pub trait BulkEncoding {
+    const MIN_INPUT_BYTES: usize;
+    fn bulk_encode(self, input: &[u8], output: &mut [u8]) -> (usize, usize);
+}

@@ -20,6 +20,7 @@ harness = false
 
 [dependencies]
 byteorder = "1.2.6"
+cfg-if = "0.1"
 
 [dev-dependencies]
 criterion = "0.2"

@@ -9,10 +9,10 @@ mod helpers;
 use helpers::*;
 
 // generate random contents of the specified length and test encode/decode roundtrip
-fn roundtrip_random(
+fn roundtrip_random<C: Encoding + Decoding + Padding>(
     byte_buf: &mut Vec<u8>,
     str_buf: &mut String,
-    config: Config,
+    config: C,
     byte_len: usize,
     approx_values_per_byte: u8,
     max_rounds: u64,
@@ -52,10 +52,6 @@ fn calculate_number_of_rounds(byte_len: usize, approx_values_per_byte: u8, max: 
     prod
 }
 
-fn no_pad_config() -> Config {
-    Config::new(CharacterSet::Standard, false)
-}
-
 #[test]
 fn roundtrip_random_short_standard() {
     let mut byte_buf: Vec<u8> = Vec::new();
@@ -85,7 +81,7 @@ fn roundtrip_random_short_no_padding() {
         roundtrip_random(
             &mut byte_buf,
             &mut str_buf,
-            no_pad_config(),
+            STANDARD_NO_PAD,
             input_len,
             4,
             10000,
@@ -102,7 +98,7 @@ fn roundtrip_random_no_padding() {
         roundtrip_random(
             &mut byte_buf,
             &mut str_buf,
-            no_pad_config(),
+            STANDARD_NO_PAD,
             input_len,
             4,
             1000,
