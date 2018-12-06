@@ -108,8 +108,12 @@ pub trait Decoding : Copy {
 }
 
 pub trait Padding : Copy {
-    const PADDING_BYTE: u8 = b'=';
     fn has_padding(self) -> bool;
+
+    #[inline]
+    fn padding_byte(self) -> u8 {
+        b'='
+    }
 }
 
 #[derive(Debug, Default, Clone, Copy)]
@@ -133,11 +137,14 @@ pub struct Config<C, P> where C: Copy, P: Copy {
 }
 
 impl<C, P> Padding for Config<C, P> where P: Padding, C: Copy {
-    const PADDING_BYTE: u8 = P::PADDING_BYTE;
-
     #[inline]
     fn has_padding(self) -> bool {
         self.padding.has_padding()
+    }
+
+    #[inline]
+    fn padding_byte(self) -> u8 {
+        self.padding.padding_byte()
     }
 }
 

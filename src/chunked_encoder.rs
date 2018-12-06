@@ -50,7 +50,7 @@ impl<C> ChunkedEncoder<C> where C: Encoding + Padding {
             if self.config.has_padding() && !more_input_left {
                 // no more input, add padding if needed. Buffer will have room because
                 // max_input_length leaves room for it.
-                b64_bytes_written += add_padding::<C>(bytes.len(), &mut encode_buf[b64_bytes_written..]);
+                b64_bytes_written += add_padding(bytes.len(), &mut encode_buf[b64_bytes_written..], self.config);
             }
 
             sink.write_encoded_bytes(&encode_buf[0..b64_bytes_written])?;

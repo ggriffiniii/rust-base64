@@ -157,7 +157,7 @@ where
     let b64_bytes_written = encode_to_slice(input, output, config);
 
     let padding_bytes = if config.has_padding() {
-        add_padding::<C>(input.len(), &mut output[b64_bytes_written..])
+        add_padding(input.len(), &mut output[b64_bytes_written..], config)
     } else {
         0
     };
@@ -240,11 +240,11 @@ pub fn encoded_size<C: Padding>(bytes_len: usize, config: C) -> Option<usize> {
 /// `output` is the slice where padding should be written, of length at least 2.
 ///
 /// Returns the number of padding bytes written.
-pub fn add_padding<C: Padding>(input_len: usize, output: &mut [u8]) -> usize {
+pub fn add_padding<C: Padding>(input_len: usize, output: &mut [u8], config: C) -> usize {
     let rem = input_len % 3;
     let mut bytes_written = 0;
     for _ in 0..((3 - rem) % 3) {
-        output[bytes_written] = C::PADDING_BYTE;
+        output[bytes_written] = config.padding_byte();
         bytes_written += 1;
     }
 
@@ -568,7 +568,7 @@ mod tests {
 
             let orig_output_buf = output.to_vec();
 
-            let bytes_written = add_padding::<::WithPadding>(input_len, &mut output);
+            let bytes_written = add_padding(input_len, &mut output, ::WithPadding);
 
             // make sure the part beyond bytes_written is the same garbage it was before
             assert_eq!(orig_output_buf[bytes_written..], output[bytes_written..]);

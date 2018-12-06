@@ -340,7 +340,7 @@ where
     let start_of_leftovers = input_index;
     for (i, b) in input[start_of_leftovers..].iter().enumerate() {
         // padding
-        if *b == C::PADDING_BYTE {
+        if *b == decoding.padding_byte() {
             // There can be bad padding in a few ways:
             // 1 - Padding with non-padding characters after it
             // 2 - Padding after zero or one non-padding characters before it
@@ -380,7 +380,7 @@ where
         if padding_bytes > 0 {
             return Err(DecodeError::InvalidByte(
                 start_of_leftovers + first_padding_index,
-                C::PADDING_BYTE,
+                decoding.padding_byte()
             ));
         }
         last_symbol = *b;
