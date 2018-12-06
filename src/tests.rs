@@ -150,7 +150,6 @@ impl ::BulkEncoding for BulkEncoding {
                 bulk_encoding.bulk_encode(input, output)
             },
         }
-        
     }
 }
 impl ::private::Sealed for BulkEncoding {}
