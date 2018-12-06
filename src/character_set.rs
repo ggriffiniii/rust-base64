@@ -43,28 +43,37 @@ fn decode_by_table(input: u8, decode_table: &[u8;256]) -> u8 {
 }
 
 impl Decoding for Standard {
-    const INVALID_VALUE: u8 = tables::INVALID_VALUE;
-
     #[inline]
     fn decode_u8(self, input: u8) -> u8 {
         decode_by_table(input, tables::STANDARD_DECODE)
     }
+
+    #[inline]
+    fn invalid_value(self) -> u8 {
+        tables::INVALID_VALUE
+    }
 }
 
 impl Decoding for UrlSafe {
-    const INVALID_VALUE: u8 = tables::INVALID_VALUE;
-
     #[inline]
     fn decode_u8(self, input: u8) -> u8 {
         decode_by_table(input, tables::URL_SAFE_DECODE)
     }
+
+    #[inline]
+    fn invalid_value(self) -> u8 {
+        tables::INVALID_VALUE
+    }
 }
 
 impl Decoding for Crypt {
-    const INVALID_VALUE: u8 = tables::INVALID_VALUE;
-
     #[inline]
     fn decode_u8(self, input: u8) -> u8 {
         decode_by_table(input, tables::CRYPT_DECODE)
+    }
+
+    #[inline]
+    fn invalid_value(self) -> u8 {
+        tables::INVALID_VALUE
     }
 }

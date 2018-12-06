@@ -103,8 +103,8 @@ pub trait IntoBulkEncoding : Copy {
 }
 
 pub trait Decoding : Copy {
-    const INVALID_VALUE: u8;
     fn decode_u8(self, input: u8) -> u8;
+    fn invalid_value(self) -> u8;
 }
 
 pub trait Padding : Copy {
@@ -112,8 +112,6 @@ pub trait Padding : Copy {
 
     #[inline]
     fn padding_byte(self) -> u8;
-    //    b'='
-    //}
 }
 
 #[derive(Debug, Default, Clone, Copy)]
@@ -169,11 +167,14 @@ impl<C, P> IntoBulkEncoding for Config<C, P> where C: IntoBulkEncoding, P: Copy 
 }
 
 impl<C, P> Decoding for Config<C, P> where C: Decoding, P: Copy {
-    const INVALID_VALUE: u8 = C::INVALID_VALUE;
-
     #[inline]
     fn decode_u8(self, input: u8) -> u8 {
         self.char_set.decode_u8(input)
+    }
+
+    #[inline]
+    fn invalid_value(self) -> u8 {
+        self.char_set.invalid_value()
     }
 }
 

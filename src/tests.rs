@@ -163,8 +163,6 @@ impl IntoBulkEncoding for Configs {
 }
 
 impl Decoding for Configs {
-    const INVALID_VALUE: u8 = ::character_set::Standard::INVALID_VALUE;
-
     fn decode_u8(self, input: u8) -> u8 {
         use self::Configs::*;
         match self {
@@ -174,6 +172,18 @@ impl Decoding for Configs {
             UrlSafeNoPad(x) => x.decode_u8(input),
             Crypt(x) => x.decode_u8(input),
             CryptNoPad(x) => x.decode_u8(input),
+        }
+    }
+
+    fn invalid_value(self) -> u8 {
+        use self::Configs::*;
+        match self {
+            Standard(x) => x.invalid_value(),
+            StandardNoPad(x) => x.invalid_value(),
+            UrlSafe(x) => x.invalid_value(),
+            UrlSafeNoPad(x) => x.invalid_value(),
+            Crypt(x) => x.invalid_value(),
+            CryptNoPad(x) => x.invalid_value(),
         }
     }
 }

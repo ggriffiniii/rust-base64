@@ -390,7 +390,7 @@ where
         let shift = 64 - (morsels_in_leftover + 1) * 6;
         // tables are all 256 elements, lookup with a u8 index always succeeds
         let morsel = decoding.decode_u8(*b);
-        if morsel == C::INVALID_VALUE {
+        if morsel == decoding.invalid_value() {
             return Err(DecodeError::InvalidByte(start_of_leftovers + i, *b));
         }
 
@@ -455,13 +455,13 @@ fn decode_chunk<C: Decoding>(
     let mut accum: u64;
 
     let morsel = decoding.decode_u8(input[0]);
-    if morsel == C::INVALID_VALUE {
+    if morsel == decoding.invalid_value() {
         return Err(DecodeError::InvalidByte(index_at_start_of_input, input[0]));
     }
     accum = (morsel as u64) << 58;
 
     let morsel = decoding.decode_u8(input[1]);
-    if morsel == C::INVALID_VALUE {
+    if morsel == decoding.invalid_value() {
         return Err(DecodeError::InvalidByte(
             index_at_start_of_input + 1,
             input[1],
@@ -470,7 +470,7 @@ fn decode_chunk<C: Decoding>(
     accum |= (morsel as u64) << 52;
 
     let morsel = decoding.decode_u8(input[2]);
-    if morsel == C::INVALID_VALUE {
+    if morsel == decoding.invalid_value() {
         return Err(DecodeError::InvalidByte(
             index_at_start_of_input + 2,
             input[2],
@@ -479,7 +479,7 @@ fn decode_chunk<C: Decoding>(
     accum |= (morsel as u64) << 46;
 
     let morsel = decoding.decode_u8(input[3]);
-    if morsel == C::INVALID_VALUE {
+    if morsel == decoding.invalid_value() {
         return Err(DecodeError::InvalidByte(
             index_at_start_of_input + 3,
             input[3],
@@ -488,7 +488,7 @@ fn decode_chunk<C: Decoding>(
     accum |= (morsel as u64) << 40;
 
     let morsel = decoding.decode_u8(input[4]);
-    if morsel == C::INVALID_VALUE {
+    if morsel == decoding.invalid_value() {
         return Err(DecodeError::InvalidByte(
             index_at_start_of_input + 4,
             input[4],
@@ -497,7 +497,7 @@ fn decode_chunk<C: Decoding>(
     accum |= (morsel as u64) << 34;
 
     let morsel = decoding.decode_u8(input[5]);
-    if morsel == C::INVALID_VALUE {
+    if morsel == decoding.invalid_value() {
         return Err(DecodeError::InvalidByte(
             index_at_start_of_input + 5,
             input[5],
@@ -506,7 +506,7 @@ fn decode_chunk<C: Decoding>(
     accum |= (morsel as u64) << 28;
 
     let morsel = decoding.decode_u8(input[6]);
-    if morsel == C::INVALID_VALUE {
+    if morsel == decoding.invalid_value() {
         return Err(DecodeError::InvalidByte(
             index_at_start_of_input + 6,
             input[6],
@@ -515,7 +515,7 @@ fn decode_chunk<C: Decoding>(
     accum |= (morsel as u64) << 22;
 
     let morsel = decoding.decode_u8(input[7]);
-    if morsel == C::INVALID_VALUE {
+    if morsel == decoding.invalid_value() {
         return Err(DecodeError::InvalidByte(
             index_at_start_of_input + 7,
             input[7],
@@ -764,83 +764,82 @@ mod tests {
         );
     }
 
-    // TODO: Consider having a method on Encoding to provide every valid character of the alphabet.
-//    #[test]
-//    fn detect_invalid_last_symbol_every_possible_three_symbols() {
-//        let mut base64_to_bytes = ::std::collections::HashMap::new();
-//
-//        let mut bytes = [0_u8; 2];
-//        for b1 in 0_u16..256 {
-//            bytes[0] = b1 as u8;
-//            for b2 in 0_u16..256 {
-//                bytes[1] = b2 as u8;
-//                let mut b64 = vec![0_u8; 4];
-//                assert_eq!(4, ::encode_config_slice(&bytes, STANDARD, &mut b64[..]));
-//                let mut v = ::std::vec::Vec::with_capacity(2);
-//                v.extend_from_slice(&bytes[..]);
-//
-//                assert!(base64_to_bytes.insert(b64, v).is_none());
-//            }
-//        }
-//
-//        // every possible combination of symbols must either decode to 2 bytes or get InvalidLastSymbol
-//
-//        let mut symbols = [0_u8; 4];
-//        for &s1 in STANDARD.char_set.encode_table().iter() {
-//            symbols[0] = s1;
-//            for &s2 in STANDARD.char_set.encode_table().iter() {
-//                symbols[1] = s2;
-//                for &s3 in STANDARD.char_set.encode_table().iter() {
-//                    symbols[2] = s3;
-//                    symbols[3] = b'=';
-//
-//                    match base64_to_bytes.get(&symbols[..]) {
-//                        Some(bytes) => {
-//                            assert_eq!(Ok(bytes.to_vec()), decode_config(&symbols, STANDARD))
-//                        }
-//                        None => assert_eq!(
-//                            Err(DecodeError::InvalidLastSymbol(2, s3)),
-//                            decode_config(&symbols[..], STANDARD)
-//                        ),
-//                    }
-//                }
-//            }
-//        }
-//    }
+    #[test]
+    fn detect_invalid_last_symbol_every_possible_three_symbols() {
+        let mut base64_to_bytes = ::std::collections::HashMap::new();
 
-//    #[test]
-//    fn detect_invalid_last_symbol_every_possible_two_symbols() {
-//        let mut base64_to_bytes = ::std::collections::HashMap::new();
-//
-//        for b in 0_u16..256 {
-//            let mut b64 = vec![0_u8; 4];
-//            assert_eq!(4, ::encode_config_slice(&[b as u8], STANDARD, &mut b64[..]));
-//            let mut v = ::std::vec::Vec::with_capacity(1);
-//            v.push(b as u8);
-//
-//            assert!(base64_to_bytes.insert(b64, v).is_none());
-//        }
-//
-//        // every possible combination of symbols must either decode to 1 byte or get InvalidLastSymbol
-//
-//        let mut symbols = [0_u8; 4];
-//        for &s1 in STANDARD.char_set.encode_table().iter() {
-//            symbols[0] = s1;
-//            for &s2 in STANDARD.char_set.encode_table().iter() {
-//                symbols[1] = s2;
-//                symbols[2] = b'=';
-//                symbols[3] = b'=';
-//
-//                match base64_to_bytes.get(&symbols[..]) {
-//                    Some(bytes) => {
-//                        assert_eq!(Ok(bytes.to_vec()), decode_config(&symbols, STANDARD))
-//                    }
-//                    None => assert_eq!(
-//                        Err(DecodeError::InvalidLastSymbol(1, s2)),
-//                        decode_config(&symbols[..], STANDARD)
-//                    ),
-//                }
-//            }
-//        }
-//    }
+        let mut bytes = [0_u8; 2];
+        for b1 in 0_u16..256 {
+            bytes[0] = b1 as u8;
+            for b2 in 0_u16..256 {
+                bytes[1] = b2 as u8;
+                let mut b64 = vec![0_u8; 4];
+                assert_eq!(4, ::encode_config_slice(&bytes, STANDARD, &mut b64[..]));
+                let mut v = ::std::vec::Vec::with_capacity(2);
+                v.extend_from_slice(&bytes[..]);
+
+                assert!(base64_to_bytes.insert(b64, v).is_none());
+            }
+        }
+
+        // every possible combination of symbols must either decode to 2 bytes or get InvalidLastSymbol
+
+        let mut symbols = [0_u8; 4];
+        for &s1 in ::tables::STANDARD_ENCODE.iter() {
+            symbols[0] = s1;
+            for &s2 in ::tables::STANDARD_ENCODE.iter() {
+                symbols[1] = s2;
+                for &s3 in ::tables::STANDARD_ENCODE.iter() {
+                    symbols[2] = s3;
+                    symbols[3] = b'=';
+
+                    match base64_to_bytes.get(&symbols[..]) {
+                        Some(bytes) => {
+                            assert_eq!(Ok(bytes.to_vec()), decode_config(&symbols, STANDARD))
+                        }
+                        None => assert_eq!(
+                            Err(DecodeError::InvalidLastSymbol(2, s3)),
+                            decode_config(&symbols[..], STANDARD)
+                        ),
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn detect_invalid_last_symbol_every_possible_two_symbols() {
+        let mut base64_to_bytes = ::std::collections::HashMap::new();
+
+        for b in 0_u16..256 {
+            let mut b64 = vec![0_u8; 4];
+            assert_eq!(4, ::encode_config_slice(&[b as u8], STANDARD, &mut b64[..]));
+            let mut v = ::std::vec::Vec::with_capacity(1);
+            v.push(b as u8);
+
+            assert!(base64_to_bytes.insert(b64, v).is_none());
+        }
+
+        // every possible combination of symbols must either decode to 1 byte or get InvalidLastSymbol
+
+        let mut symbols = [0_u8; 4];
+        for &s1 in ::tables::STANDARD_ENCODE.iter() {
+            symbols[0] = s1;
+            for &s2 in ::tables::STANDARD_ENCODE.iter() {
+                symbols[1] = s2;
+                symbols[2] = b'=';
+                symbols[3] = b'=';
+
+                match base64_to_bytes.get(&symbols[..]) {
+                    Some(bytes) => {
+                        assert_eq!(Ok(bytes.to_vec()), decode_config(&symbols, STANDARD))
+                    }
+                    None => assert_eq!(
+                        Err(DecodeError::InvalidLastSymbol(1, s2)),
+                        decode_config(&symbols[..], STANDARD)
+                    ),
+                }
+            }
+        }
+    }
 }
