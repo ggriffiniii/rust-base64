@@ -5,7 +5,7 @@ extern crate rand;
 
 use base64::display;
 use base64::{
-    decode_config, decode_config_buf, decode_config_slice, encode_config, encode_config_buf,
+    decode_config, decode_config_buf, decode_config_slice, encode_config_buf,
     encode_config_slice, write, Config,
 };
 

@@ -115,12 +115,14 @@ pub trait Padding : Copy {
 #[derive(Debug, Default, Clone, Copy)]
 pub struct WithPadding;
 impl Padding for WithPadding {
+    #[inline]
     fn has_padding(self) -> bool { true }
 }
 
 #[derive(Debug, Default, Clone, Copy)]
 pub struct NoPadding;
 impl Padding for NoPadding {
+    #[inline]
     fn has_padding(self) -> bool { false }
 }
 
