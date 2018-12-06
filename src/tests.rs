@@ -35,7 +35,7 @@ pub fn assert_encode_sanity<C: Encoding + Padding>(encoded: &str, config: C, inp
 
     assert_eq!(expected_encoded_len, encoded.len());
 
-    let padding_len = encoded.as_bytes().iter().filter(|&&c| c == C::PADDING_BYTE).count();
+    let padding_len = encoded.as_bytes().iter().filter(|&&c| c == config.padding_byte()).count();
 
     assert_eq!(expected_padding_len, padding_len);
 
@@ -78,8 +78,6 @@ pub(crate) enum Configs {
 }
 
 impl Padding for Configs {
-    const PADDING_BYTE: u8 = ::WithPadding::PADDING_BYTE;
-
     fn has_padding(self) -> bool {
         use self::Configs::*;
         match self {
@@ -90,6 +88,19 @@ impl Padding for Configs {
             Crypt(x) => x.has_padding(),
             CryptNoPad(x) => x.has_padding(),
         }
+    }
+
+    fn padding_byte(self) -> u8 {
+        use self::Configs::*;
+        match self {
+            Standard(x) => x.padding_byte(),
+            StandardNoPad(x) => x.padding_byte(),
+            UrlSafe(x) => x.padding_byte(),
+            UrlSafeNoPad(x) => x.padding_byte(),
+            Crypt(x) => x.padding_byte(),
+            CryptNoPad(x) => x.padding_byte(),
+        }
+
     }
 }
 

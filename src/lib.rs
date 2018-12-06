@@ -111,9 +111,9 @@ pub trait Padding : Copy {
     fn has_padding(self) -> bool;
 
     #[inline]
-    fn padding_byte(self) -> u8 {
-        b'='
-    }
+    fn padding_byte(self) -> u8;
+    //    b'='
+    //}
 }
 
 #[derive(Debug, Default, Clone, Copy)]
@@ -121,6 +121,8 @@ pub struct WithPadding;
 impl Padding for WithPadding {
     #[inline]
     fn has_padding(self) -> bool { true }
+    #[inline]
+    fn padding_byte(self) -> u8 { b'=' }
 }
 
 #[derive(Debug, Default, Clone, Copy)]
@@ -128,6 +130,8 @@ pub struct NoPadding;
 impl Padding for NoPadding {
     #[inline]
     fn has_padding(self) -> bool { false }
+    #[inline]
+    fn padding_byte(self) -> u8 { b'=' }  // irrelevant since has_padding is false.
 }
 
 #[derive(Debug, Default, Clone, Copy)]
