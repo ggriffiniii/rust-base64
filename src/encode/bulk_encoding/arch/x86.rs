@@ -1,4 +1,4 @@
-use {character_set, IntoBulkEncoding};
+use {character_set, IntoBulkEncoding, encode::bulk_encoding::ScalarBulkEncoding};
 
 #[derive(Debug, Default, Clone, Copy)]
 pub struct BulkEncoding<C>(C);
@@ -6,19 +6,22 @@ pub struct BulkEncoding<C>(C);
 impl<C> ::BulkEncoding for BulkEncoding<C> where C: ::Encoding + sse::Translate128i + avx2::Translate256i {
     const MIN_INPUT_BYTES: usize = sse::BulkEncoding::<C>::INPUT_CHUNK_BYTES_READ;
 
+    #[inline]
     fn bulk_encode(self, input: &[u8], output: &mut [u8]) -> (usize, usize) {
-        if let Ok(encoder) = avx2::BulkEncoding::new(self.0) {
-            encoder.bulk_encode(input, output)
-        } else if let Ok(encoder) = sse::BulkEncoding::new(self.0) {
-            encoder.bulk_encode(input, output)
+        if let Ok(encoding) = avx2::BulkEncoding::new(self.0) {
+            encoding.bulk_encode(input, output)
+        } else if let Ok(encoding) = sse::BulkEncoding::new(self.0) {
+            encoding.bulk_encode(input, output)
         } else {
-            (0, 0)
+            ScalarBulkEncoding(self.0).bulk_encode(input, output)
         }
     }
 }
 
 impl IntoBulkEncoding for character_set::Standard {
     type BulkEncoding = BulkEncoding<Self>;
+
+    #[inline]
     fn into_bulk_encoding(self) -> BulkEncoding<Self> {
         BulkEncoding(self)
     }
@@ -26,6 +29,8 @@ impl IntoBulkEncoding for character_set::Standard {
 
 impl IntoBulkEncoding for character_set::UrlSafe {
     type BulkEncoding = BulkEncoding<Self>;
+
+    #[inline]
     fn into_bulk_encoding(self) -> BulkEncoding<Self> {
         BulkEncoding(self)
     }
@@ -33,6 +38,8 @@ impl IntoBulkEncoding for character_set::UrlSafe {
 
 impl IntoBulkEncoding for character_set::Crypt {
     type BulkEncoding = BulkEncoding<Self>;
+
+    #[inline]
     fn into_bulk_encoding(self) -> BulkEncoding<Self> {
         BulkEncoding(self)
     }
