@@ -153,6 +153,7 @@ impl ::BulkEncoding for BulkEncoding {
         
     }
 }
+impl ::private::Sealed for BulkEncoding {}
 
 impl IntoBulkEncoding for Configs {
     type BulkEncoding = BulkEncoding;
@@ -187,6 +188,8 @@ impl Decoding for Configs {
         }
     }
 }
+
+impl ::private::Sealed for Configs {}
 
 impl rand::distributions::Distribution<Configs> for rand::distributions::Standard {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Configs {

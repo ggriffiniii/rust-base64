@@ -88,3 +88,5 @@ impl<C> ::BulkEncoding for ScalarBulkEncoding<C> where C: Encoding {
         (input_index, output_index)
     }
 }
+
+impl<C> ::private::Sealed for ScalarBulkEncoding<C> {}

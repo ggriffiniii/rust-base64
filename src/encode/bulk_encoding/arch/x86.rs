@@ -17,6 +17,7 @@ impl<C> ::BulkEncoding for BulkEncoding<C> where C: ::Encoding + sse::Translate1
         }
     }
 }
+impl<C> ::private::Sealed for BulkEncoding<C> {}
 
 impl IntoBulkEncoding for character_set::Standard {
     type BulkEncoding = BulkEncoding<Self>;

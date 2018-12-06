@@ -89,25 +89,29 @@ pub const URL_SAFE_NO_PAD: Config<character_set::UrlSafe, NoPadding> = Config{ch
 pub const CRYPT: Config<character_set::Crypt, WithPadding> = Config{char_set: character_set::Crypt, padding: WithPadding};
 pub const CRYPT_NO_PAD: Config<character_set::Crypt, NoPadding> = Config{char_set: character_set::Crypt, padding: NoPadding};
 
+mod private {
+    pub trait Sealed {}
+}
 
-pub trait Encoding : IntoBulkEncoding + Copy
+
+pub trait Encoding : private::Sealed + IntoBulkEncoding + Copy
 where
     Self: Sized,
 {
     fn encode_u6(self, input: u8) -> u8;
 }
 
-pub trait IntoBulkEncoding : Copy {
+pub trait IntoBulkEncoding : private::Sealed + Copy {
     type BulkEncoding: BulkEncoding;
     fn into_bulk_encoding(self) -> Self::BulkEncoding;
 }
 
-pub trait Decoding : Copy {
+pub trait Decoding : private::Sealed + Copy {
     fn decode_u8(self, input: u8) -> u8;
     fn invalid_value(self) -> u8;
 }
 
-pub trait Padding : Copy {
+pub trait Padding : private::Sealed + Copy {
     fn has_padding(self) -> bool;
 
     #[inline]
@@ -123,6 +127,8 @@ impl Padding for WithPadding {
     fn padding_byte(self) -> u8 { b'=' }
 }
 
+impl private::Sealed for WithPadding {}
+
 #[derive(Debug, Default, Clone, Copy)]
 pub struct NoPadding;
 impl Padding for NoPadding {
@@ -131,6 +137,8 @@ impl Padding for NoPadding {
     #[inline]
     fn padding_byte(self) -> u8 { b'=' }  // irrelevant since has_padding is false.
 }
+
+impl private::Sealed for NoPadding {}
 
 #[derive(Debug, Default, Clone, Copy)]
 pub struct Config<C, P> where C: Copy, P: Copy {
@@ -178,7 +186,9 @@ impl<C, P> Decoding for Config<C, P> where C: Decoding, P: Copy {
     }
 }
 
-pub trait BulkEncoding {
+impl<C, P> private::Sealed for Config<C, P> where C: Copy, P: Copy {}
+
+pub trait BulkEncoding : private::Sealed {
     const MIN_INPUT_BYTES: usize;
 
     fn bulk_encode(self, input: &[u8], output: &mut [u8]) -> (usize, usize);

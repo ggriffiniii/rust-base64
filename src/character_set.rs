@@ -77,3 +77,7 @@ impl Decoding for Crypt {
         tables::INVALID_VALUE
     }
 }
+
+impl ::private::Sealed for Standard {}
+impl ::private::Sealed for UrlSafe {}
+impl ::private::Sealed for Crypt {}
