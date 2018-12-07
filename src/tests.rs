@@ -19,7 +19,7 @@ fn roundtrip_random_config_long() {
     roundtrip_random_config(Range::new(0, 1000), 10_000);
 }
 
-pub fn assert_encode_sanity<C: Encoding + Padding>(encoded: &str, config: C, input_len: usize) {
+pub fn assert_encode_sanity<C: encode::Encoding + Padding>(encoded: &str, config: C, input_len: usize) {
     let input_rem = input_len % 3;
     let expected_padding_len = if input_rem > 0 {
         if config.has_padding() {
@@ -35,7 +35,7 @@ pub fn assert_encode_sanity<C: Encoding + Padding>(encoded: &str, config: C, inp
 
     assert_eq!(expected_encoded_len, encoded.len());
 
-    let padding_len = encoded.as_bytes().iter().filter(|&&c| c == config.padding_byte()).count();
+    let padding_len = encoded.as_bytes().iter().filter(|&&c| Some(c) == config.padding_byte()).count();
 
     assert_eq!(expected_padding_len, padding_len);
 
@@ -69,28 +69,16 @@ fn roundtrip_random_config(input_len_range: Range<usize>, iterations: u32) {
 
 #[derive(Debug, Clone, Copy)]
 pub(crate) enum Configs {
-    Standard(Config<::character_set::Standard, ::WithPadding>),
-    StandardNoPad(Config<::character_set::Standard, ::NoPadding>),
-    UrlSafe(Config<::character_set::UrlSafe, ::WithPadding>),
-    UrlSafeNoPad(Config<::character_set::UrlSafe, ::NoPadding>),
-    Crypt(Config<::character_set::Crypt, ::WithPadding>),
-    CryptNoPad(Config<::character_set::Crypt, ::NoPadding>),
+    Standard(Standard),
+    StandardNoPad(StandardNoPad),
+    UrlSafe(UrlSafe),
+    UrlSafeNoPad(UrlSafeNoPad),
+    Crypt(Crypt),
+    CryptNoPad(CryptNoPad),
 }
 
 impl Padding for Configs {
-    fn has_padding(self) -> bool {
-        use self::Configs::*;
-        match self {
-            Standard(x) => x.has_padding(),
-            StandardNoPad(x) => x.has_padding(),
-            UrlSafe(x) => x.has_padding(),
-            UrlSafeNoPad(x) => x.has_padding(),
-            Crypt(x) => x.has_padding(),
-            CryptNoPad(x) => x.has_padding(),
-        }
-    }
-
-    fn padding_byte(self) -> u8 {
+    fn padding_byte(self) -> Option<u8> {
         use self::Configs::*;
         match self {
             Standard(x) => x.padding_byte(),
@@ -104,7 +92,7 @@ impl Padding for Configs {
     }
 }
 
-impl Encoding for Configs {
+impl encode::Encoding for Configs {
     fn encode_u6(self, input: u8) -> u8 {
         use self::Configs::*;
         match self {
@@ -119,10 +107,11 @@ impl Encoding for Configs {
 }
 
 pub(crate) struct BulkEncoding(Configs);
-impl ::BulkEncoding for BulkEncoding {
+impl ::encode::bulk_encoding::BulkEncoding for BulkEncoding {
     const MIN_INPUT_BYTES: usize = 0;
 
     fn bulk_encode(self, input: &[u8], output: &mut [u8]) -> (usize, usize) {
+        use encode::bulk_encoding::IntoBulkEncoding;
         use self::Configs::*;
         match self.0 {
             Standard(x) => {
@@ -155,7 +144,7 @@ impl ::BulkEncoding for BulkEncoding {
 }
 impl ::private::Sealed for BulkEncoding {}
 
-impl IntoBulkEncoding for Configs {
+impl ::encode::bulk_encoding::IntoBulkEncoding for Configs {
     type BulkEncoding = BulkEncoding;
 
     fn into_bulk_encoding(self) -> Self::BulkEncoding {
@@ -163,7 +152,7 @@ impl IntoBulkEncoding for Configs {
     }
 }
 
-impl Decoding for Configs {
+impl ::decode::Decoding for Configs {
     fn decode_u8(self, input: u8) -> u8 {
         use self::Configs::*;
         match self {

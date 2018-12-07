@@ -23,7 +23,7 @@ byteorder = "1.2.6"
 cfg-if = "0.1"
 
 [dev-dependencies]
-criterion = "0.2"
+criterion = { version = "0.2", path = "../criterion.rs" }
 rand = "0.5.5"
 
 [profile.bench]

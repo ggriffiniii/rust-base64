@@ -1,5 +1,5 @@
 use byteorder::{BigEndian, ByteOrder};
-use {Decoding, Padding, STANDARD};
+use {Padding, STANDARD};
 
 use std::{error, fmt, str};
 
@@ -340,7 +340,7 @@ where
     let start_of_leftovers = input_index;
     for (i, b) in input[start_of_leftovers..].iter().enumerate() {
         // padding
-        if *b == decoding.padding_byte() {
+        if Some(*b) == decoding.padding_byte() {
             // There can be bad padding in a few ways:
             // 1 - Padding with non-padding characters after it
             // 2 - Padding after zero or one non-padding characters before it
@@ -380,7 +380,7 @@ where
         if padding_bytes > 0 {
             return Err(DecodeError::InvalidByte(
                 start_of_leftovers + first_padding_index,
-                decoding.padding_byte()
+                decoding.padding_byte().unwrap()
             ));
         }
         last_symbol = *b;
@@ -551,6 +551,65 @@ fn decode_chunk_precise<C: Decoding>(
     Ok(())
 }
 
+#[inline]
+fn decode_by_table(input: u8, decode_table: &[u8;256]) -> u8 {
+    decode_table[input as usize]
+}
+
+pub trait Decoding : ::private::Sealed + Copy {
+    fn decode_u8(self, input: u8) -> u8;
+    fn invalid_value(self) -> u8;
+}
+
+impl Decoding for ::StandardAlphabet {
+    #[inline]
+    fn decode_u8(self, input: u8) -> u8 {
+        decode_by_table(input, ::tables::STANDARD_DECODE)
+    }
+
+    #[inline]
+    fn invalid_value(self) -> u8 {
+        ::tables::INVALID_VALUE
+    }
+}
+
+impl Decoding for ::UrlSafeAlphabet {
+    #[inline]
+    fn decode_u8(self, input: u8) -> u8 {
+        decode_by_table(input, ::tables::URL_SAFE_DECODE)
+    }
+
+    #[inline]
+    fn invalid_value(self) -> u8 {
+        ::tables::INVALID_VALUE
+    }
+}
+
+impl Decoding for ::CryptAlphabet {
+    #[inline]
+    fn decode_u8(self, input: u8) -> u8 {
+        decode_by_table(input, ::tables::CRYPT_DECODE)
+    }
+
+    #[inline]
+    fn invalid_value(self) -> u8 {
+        ::tables::INVALID_VALUE
+    }
+}
+
+impl Decoding for &::CustomConfig {
+    #[inline]
+    fn decode_u8(self, input: u8) -> u8 {
+        decode_by_table(input, &self.decode_table)
+    }
+
+    #[inline]
+    fn invalid_value(self) -> u8 {
+        self.invalid_value
+    }
+}
+
+
 #[cfg(test)]
 mod tests {
     extern crate rand;
@@ -566,7 +625,7 @@ mod tests {
     fn decode_chunk_precise_writes_only_6_bytes() {
         let input = b"Zm9vYmFy"; // "foobar"
         let mut output = [0_u8, 1, 2, 3, 4, 5, 6, 7];
-        decode_chunk_precise(&input[..], 0, ::character_set::Standard, &mut output).unwrap();
+        decode_chunk_precise(&input[..], 0, ::StandardAlphabet, &mut output).unwrap();
         assert_eq!(&vec![b'f', b'o', b'o', b'b', b'a', b'r', 6, 7], &output);
     }
 
@@ -574,7 +633,7 @@ mod tests {
     fn decode_chunk_writes_8_bytes() {
         let input = b"Zm9vYmFy"; // "foobar"
         let mut output = [0_u8, 1, 2, 3, 4, 5, 6, 7];
-        decode_chunk(&input[..], 0, ::character_set::Standard, &mut output).unwrap();
+        decode_chunk(&input[..], 0, ::StandardAlphabet, &mut output).unwrap();
         assert_eq!(&vec![b'f', b'o', b'o', b'b', b'a', b'r', 0, 0], &output);
     }
 

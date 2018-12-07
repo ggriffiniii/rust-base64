@@ -1,4 +1,4 @@
-use {Encoding, Padding, BulkEncoding, STANDARD};
+use {Padding, STANDARD};
 
 pub mod bulk_encoding;
 
@@ -156,8 +156,8 @@ where
 
     let b64_bytes_written = encode_to_slice(input, output, config);
 
-    let padding_bytes = if config.has_padding() {
-        add_padding(input.len(), &mut output[b64_bytes_written..], config)
+    let padding_bytes = if let Some(padding_byte) = config.padding_byte() {
+        add_padding(input.len(), &mut output[b64_bytes_written..], padding_byte)
     } else {
         0
     };
@@ -177,6 +177,7 @@ pub fn encode_to_slice<C>(input: &[u8], output: &mut [u8], char_set: C) -> usize
 where
     C: Encoding,
 {
+    use self::bulk_encoding::BulkEncoding;
     let (mut input_index, mut output_index) = if input.len() < C::BulkEncoding::MIN_INPUT_BYTES {
         (0, 0)
     } else {
@@ -240,16 +241,58 @@ pub fn encoded_size<C: Padding>(bytes_len: usize, config: C) -> Option<usize> {
 /// `output` is the slice where padding should be written, of length at least 2.
 ///
 /// Returns the number of padding bytes written.
-pub fn add_padding<C: Padding>(input_len: usize, output: &mut [u8], config: C) -> usize {
+pub fn add_padding(input_len: usize, output: &mut [u8], padding_byte: u8) -> usize {
     let rem = input_len % 3;
     let mut bytes_written = 0;
     for _ in 0..((3 - rem) % 3) {
-        output[bytes_written] = config.padding_byte();
+        output[bytes_written] = padding_byte;
         bytes_written += 1;
     }
 
     bytes_written
 }
+
+pub trait Encoding : ::private::Sealed + bulk_encoding::IntoBulkEncoding + Copy
+where
+    Self: Sized,
+{
+    fn encode_u6(self, input: u8) -> u8;
+}
+
+#[inline]
+fn encode_u6_by_table(input: u8, encode_table: &[u8;64]) -> u8 {
+    debug_assert!(input < 64);
+    encode_table[input as usize]
+}
+
+impl Encoding for ::StandardAlphabet {
+    #[inline]
+    fn encode_u6(self, input: u8) -> u8 {
+        encode_u6_by_table(input, ::tables::STANDARD_ENCODE)
+    }
+}
+
+impl Encoding for ::UrlSafeAlphabet {
+    #[inline]
+    fn encode_u6(self, input: u8) -> u8 {
+        encode_u6_by_table(input, ::tables::URL_SAFE_ENCODE)
+    }
+}
+
+impl Encoding for ::CryptAlphabet {
+    #[inline]
+    fn encode_u6(self, input: u8) -> u8 {
+        encode_u6_by_table(input, ::tables::CRYPT_ENCODE)
+    }
+}
+
+impl Encoding for &::CustomConfig {
+    #[inline]
+    fn encode_u6(self, input: u8) -> u8 {
+        encode_u6_by_table(input, &self.encode_table)
+    }
+}
+
 
 #[cfg(test)]
 mod tests {
@@ -568,7 +611,7 @@ mod tests {
 
             let orig_output_buf = output.to_vec();
 
-            let bytes_written = add_padding(input_len, &mut output, ::WithPadding);
+            let bytes_written = add_padding(input_len, &mut output, b'=');
 
             // make sure the part beyond bytes_written is the same garbage it was before
             assert_eq!(orig_output_buf[bytes_written..], output[bytes_written..]);
