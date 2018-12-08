@@ -1,7 +1,7 @@
 use encode::encode_to_slice;
 use std::io::{Result, Write};
 use std::{cmp, fmt};
-use {encode_config_slice, Encoding, Padding};
+use {encode_config_slice, Padding};
 
 pub(crate) const BUF_SIZE: usize = 1024;
 /// The most bytes whose encoding will fit in `BUF_SIZE`
@@ -54,7 +54,7 @@ const MIN_ENCODE_CHUNK_SIZE: usize = 3;
 ///
 /// It has some minor performance loss compared to encoding slices (a couple percent).
 /// It does not do any heap allocation.
-pub struct EncoderWriter<'a, C: Encoding + Padding, W: 'a + Write> {
+pub struct EncoderWriter<'a, C: ::encode::Encoding + Padding, W: 'a + Write> {
     config: C,
     /// Where encoded data is written to
     w: &'a mut W,
@@ -71,7 +71,7 @@ pub struct EncoderWriter<'a, C: Encoding + Padding, W: 'a + Write> {
     panicked: bool,
 }
 
-impl<'a, C: Encoding + Padding, W: Write> fmt::Debug for EncoderWriter<'a, C, W> {
+impl<'a, C: ::encode::Encoding + Padding, W: Write> fmt::Debug for EncoderWriter<'a, C, W> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
@@ -83,7 +83,7 @@ impl<'a, C: Encoding + Padding, W: Write> fmt::Debug for EncoderWriter<'a, C, W>
     }
 }
 
-impl<'a, C: Encoding + Padding, W: Write> EncoderWriter<'a, C, W> {
+impl<'a, C: ::encode::Encoding + Padding, W: Write> EncoderWriter<'a, C, W> {
     /// Create a new encoder around an existing writer.
     pub fn new(w: &'a mut W, config: C) -> EncoderWriter<'a, C, W> {
         EncoderWriter {
@@ -130,7 +130,7 @@ impl<'a, C: Encoding + Padding, W: Write> EncoderWriter<'a, C, W> {
     }
 }
 
-impl<'a, C: Encoding + Padding, W: Write> Write for EncoderWriter<'a, C, W> {
+impl<'a, C: ::encode::Encoding + Padding, W: Write> Write for EncoderWriter<'a, C, W> {
     fn write(&mut self, input: &[u8]) -> Result<usize> {
         if self.finished {
             panic!("Cannot write more after calling finish()");
@@ -247,7 +247,7 @@ impl<'a, C: Encoding + Padding, W: Write> Write for EncoderWriter<'a, C, W> {
     }
 }
 
-impl<'a, C: Encoding + Padding, W: Write> Drop for EncoderWriter<'a, C, W> {
+impl<'a, C: ::encode::Encoding + Padding, W: Write> Drop for EncoderWriter<'a, C, W> {
     fn drop(&mut self) {
         if !self.panicked {
             // like `BufWriter`, ignore errors during drop

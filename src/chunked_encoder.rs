@@ -1,6 +1,6 @@
 use encode::{add_padding, encode_to_slice};
 use std::{cmp, str};
-use {Encoding, Padding};
+use Padding;
 
 /// The output mechanism for ChunkedEncoder's encoded bytes.
 pub trait Sink {
@@ -18,7 +18,7 @@ pub struct ChunkedEncoder<C> {
     max_input_chunk_len: usize,
 }
 
-impl<C> ChunkedEncoder<C> where C: Encoding + Padding {
+impl<C> ChunkedEncoder<C> where C: ::encode::Encoding + Padding {
     pub fn new(config: C) -> ChunkedEncoder<C> {
         ChunkedEncoder {
             config,
@@ -29,7 +29,7 @@ impl<C> ChunkedEncoder<C> where C: Encoding + Padding {
     pub fn encode<S>(&self, bytes: &[u8], sink: &mut S) -> Result<(), S::Error>
     where 
         S: Sink,
-        C: Encoding + Padding,
+        C: ::encode::Encoding + Padding,
     {
         let mut encode_buf: [u8; BUF_SIZE] = [0; BUF_SIZE];
 
@@ -47,10 +47,12 @@ impl<C> ChunkedEncoder<C> where C: Encoding + Padding {
             input_index += input_chunk_len;
             let more_input_left = input_index < bytes.len();
 
-            if self.config.has_padding() && !more_input_left {
-                // no more input, add padding if needed. Buffer will have room because
-                // max_input_length leaves room for it.
-                b64_bytes_written += add_padding(bytes.len(), &mut encode_buf[b64_bytes_written..], self.config);
+            if let Some(padding_byte) = self.config.padding_byte() {
+                if !more_input_left {
+                    // no more input, add padding if needed. Buffer will have room because
+                    // max_input_length leaves room for it.
+                    b64_bytes_written += add_padding(bytes.len(), &mut encode_buf[b64_bytes_written..], padding_byte);
+                }
             }
 
             sink.write_encoded_bytes(&encode_buf[0..b64_bytes_written])?;
@@ -67,7 +69,7 @@ impl<C> ChunkedEncoder<C> where C: Encoding + Padding {
 ///
 /// The input length will always be a multiple of 3 so that no encoding state has to be carried over
 /// between chunks.
-fn max_input_length<C: Encoding + Padding>(encoded_buf_len: usize, config: C) -> usize {
+fn max_input_length<C: ::encode::Encoding + Padding>(encoded_buf_len: usize, config: C) -> usize {
     let effective_buf_len = if config.has_padding() {
         // make room for padding
         encoded_buf_len
@@ -206,7 +208,7 @@ pub mod tests {
         }
     }
 
-    fn chunked_encode_str<C: Encoding + Padding>(bytes: &[u8], config: C) -> String {
+    fn chunked_encode_str<C: ::encode::Encoding + Padding>(bytes: &[u8], config: C) -> String {
         let mut s = String::new();
         {
             let mut sink = StringSink::new(&mut s);
@@ -217,11 +219,8 @@ pub mod tests {
         return s;
     }
 
-    fn config_with_pad<P: Padding>(pad: P) -> Config<character_set::Standard, P> {
-        Config{
-            char_set: character_set::Standard,
-            padding: pad,
-        }
+    fn config_with_pad<P: Padding>(pad: P) -> Config<::StandardAlphabet, P> {
+        Config(StandardAlphabet, pad)
     }
 
     // An abstraction around sinks so that we can have tests that easily to any sink implementation

@@ -1,5 +1,5 @@
 use byteorder::{BigEndian, ByteOrder};
-use {Decoding, Padding, STANDARD};
+use {Padding, STANDARD};
 
 use std::{error, fmt, str};
 
@@ -340,7 +340,7 @@ where
     let start_of_leftovers = input_index;
     for (i, b) in input[start_of_leftovers..].iter().enumerate() {
         // padding
-        if *b == decoding.padding_byte() {
+        if Some(*b) == decoding.padding_byte() {
             // There can be bad padding in a few ways:
             // 1 - Padding with non-padding characters after it
             // 2 - Padding after zero or one non-padding characters before it
@@ -380,7 +380,7 @@ where
         if padding_bytes > 0 {
             return Err(DecodeError::InvalidByte(
                 start_of_leftovers + first_padding_index,
-                decoding.padding_byte()
+                decoding.padding_byte().unwrap()
             ));
         }
         last_symbol = *b;
@@ -454,73 +454,37 @@ fn decode_chunk<C: Decoding>(
 ) -> Result<(), DecodeError> {
     let mut accum: u64;
 
-    let morsel = decoding.decode_u8(input[0]);
-    if morsel == decoding.invalid_value() {
-        return Err(DecodeError::InvalidByte(index_at_start_of_input, input[0]));
-    }
+    let morsel_at = |idx| {
+        let morsel = decoding.decode_u8(input[idx]);
+        if morsel == decoding.invalid_value() {
+            Err(DecodeError::InvalidByte(index_at_start_of_input + idx, input[idx]))
+        } else {
+            Ok(morsel)
+        }
+    };
+
+    let morsel = morsel_at(0)?;
     accum = (morsel as u64) << 58;
 
-    let morsel = decoding.decode_u8(input[1]);
-    if morsel == decoding.invalid_value() {
-        return Err(DecodeError::InvalidByte(
-            index_at_start_of_input + 1,
-            input[1],
-        ));
-    }
+    let morsel = morsel_at(1)?;
     accum |= (morsel as u64) << 52;
 
-    let morsel = decoding.decode_u8(input[2]);
-    if morsel == decoding.invalid_value() {
-        return Err(DecodeError::InvalidByte(
-            index_at_start_of_input + 2,
-            input[2],
-        ));
-    }
+    let morsel = morsel_at(2)?;
     accum |= (morsel as u64) << 46;
 
-    let morsel = decoding.decode_u8(input[3]);
-    if morsel == decoding.invalid_value() {
-        return Err(DecodeError::InvalidByte(
-            index_at_start_of_input + 3,
-            input[3],
-        ));
-    }
+    let morsel = morsel_at(3)?;
     accum |= (morsel as u64) << 40;
 
-    let morsel = decoding.decode_u8(input[4]);
-    if morsel == decoding.invalid_value() {
-        return Err(DecodeError::InvalidByte(
-            index_at_start_of_input + 4,
-            input[4],
-        ));
-    }
+    let morsel = morsel_at(4)?;
     accum |= (morsel as u64) << 34;
 
-    let morsel = decoding.decode_u8(input[5]);
-    if morsel == decoding.invalid_value() {
-        return Err(DecodeError::InvalidByte(
-            index_at_start_of_input + 5,
-            input[5],
-        ));
-    }
+    let morsel = morsel_at(5)?;
     accum |= (morsel as u64) << 28;
 
-    let morsel = decoding.decode_u8(input[6]);
-    if morsel == decoding.invalid_value() {
-        return Err(DecodeError::InvalidByte(
-            index_at_start_of_input + 6,
-            input[6],
-        ));
-    }
+    let morsel = morsel_at(6)?;
     accum |= (morsel as u64) << 22;
 
-    let morsel = decoding.decode_u8(input[7]);
-    if morsel == decoding.invalid_value() {
-        return Err(DecodeError::InvalidByte(
-            index_at_start_of_input + 7,
-            input[7],
-        ));
-    }
+    let morsel = morsel_at(7)?;
     accum |= (morsel as u64) << 16;
 
     BigEndian::write_u64(output, accum);
@@ -551,6 +515,65 @@ fn decode_chunk_precise<C: Decoding>(
     Ok(())
 }
 
+#[inline]
+fn decode_by_table(input: u8, decode_table: &[u8;256]) -> u8 {
+    decode_table[input as usize]
+}
+
+pub trait Decoding : ::private::Sealed + Copy {
+    fn decode_u8(self, input: u8) -> u8;
+    fn invalid_value(self) -> u8;
+}
+
+impl Decoding for ::StandardAlphabet {
+    #[inline]
+    fn decode_u8(self, input: u8) -> u8 {
+        decode_by_table(input, ::tables::STANDARD_DECODE)
+    }
+
+    #[inline]
+    fn invalid_value(self) -> u8 {
+        ::tables::INVALID_VALUE
+    }
+}
+
+impl Decoding for ::UrlSafeAlphabet {
+    #[inline]
+    fn decode_u8(self, input: u8) -> u8 {
+        decode_by_table(input, ::tables::URL_SAFE_DECODE)
+    }
+
+    #[inline]
+    fn invalid_value(self) -> u8 {
+        ::tables::INVALID_VALUE
+    }
+}
+
+impl Decoding for ::CryptAlphabet {
+    #[inline]
+    fn decode_u8(self, input: u8) -> u8 {
+        decode_by_table(input, ::tables::CRYPT_DECODE)
+    }
+
+    #[inline]
+    fn invalid_value(self) -> u8 {
+        ::tables::INVALID_VALUE
+    }
+}
+
+impl Decoding for &::CustomConfig {
+    #[inline]
+    fn decode_u8(self, input: u8) -> u8 {
+        decode_by_table(input, &self.decode_table)
+    }
+
+    #[inline]
+    fn invalid_value(self) -> u8 {
+        self.invalid_value
+    }
+}
+
+
 #[cfg(test)]
 mod tests {
     extern crate rand;
@@ -566,7 +589,7 @@ mod tests {
     fn decode_chunk_precise_writes_only_6_bytes() {
         let input = b"Zm9vYmFy"; // "foobar"
         let mut output = [0_u8, 1, 2, 3, 4, 5, 6, 7];
-        decode_chunk_precise(&input[..], 0, ::character_set::Standard, &mut output).unwrap();
+        decode_chunk_precise(&input[..], 0, ::StandardAlphabet, &mut output).unwrap();
         assert_eq!(&vec![b'f', b'o', b'o', b'b', b'a', b'r', 6, 7], &output);
     }
 
@@ -574,7 +597,7 @@ mod tests {
     fn decode_chunk_writes_8_bytes() {
         let input = b"Zm9vYmFy"; // "foobar"
         let mut output = [0_u8, 1, 2, 3, 4, 5, 6, 7];
-        decode_chunk(&input[..], 0, ::character_set::Standard, &mut output).unwrap();
+        decode_chunk(&input[..], 0, ::StandardAlphabet, &mut output).unwrap();
         assert_eq!(&vec![b'f', b'o', b'o', b'b', b'a', b'r', 0, 0], &output);
     }
 

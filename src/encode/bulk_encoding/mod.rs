@@ -1,18 +1,29 @@
 use byteorder::{BigEndian, ByteOrder};
-use Encoding;
 
 pub mod arch;
 
+pub trait IntoBulkEncoding : ::private::Sealed + Copy {
+    type BulkEncoding: BulkEncoding;
+    fn into_bulk_encoding(self) -> Self::BulkEncoding;
+}
+
+pub trait BulkEncoding : ::private::Sealed {
+    const MIN_INPUT_BYTES: usize;
+
+    fn bulk_encode(self, input: &[u8], output: &mut [u8]) -> (usize, usize);
+}
+
+
 // TODO: remove the dead_code bypass once a custom alphabet encoding is provided.
 #[allow(dead_code)]
-struct ScalarBulkEncoding<C>(C);
+pub struct ScalarBulkEncoding<C>(C);
 impl<C> ScalarBulkEncoding<C> {
     const INPUT_CHUNK_BYTES_READ: usize = 26;
     const INPUT_CHUNK_BYTES_ENCODED: usize = 24;
     const OUTPUT_CHUNK_BYTES_WRITTEN: usize = 32;
 }
 
-impl<C> ::BulkEncoding for ScalarBulkEncoding<C> where C: Encoding {
+impl<C> BulkEncoding for ScalarBulkEncoding<C> where C: ::encode::Encoding {
     const MIN_INPUT_BYTES: usize = 26;
 
     #[inline]
@@ -90,3 +101,12 @@ impl<C> ::BulkEncoding for ScalarBulkEncoding<C> where C: Encoding {
 }
 
 impl<C> ::private::Sealed for ScalarBulkEncoding<C> {}
+
+impl IntoBulkEncoding for &::CustomConfig {
+    type BulkEncoding = ScalarBulkEncoding<Self>;
+
+    #[inline]
+    fn into_bulk_encoding(self) -> ScalarBulkEncoding<Self> {
+        ScalarBulkEncoding(self)
+    }
+}

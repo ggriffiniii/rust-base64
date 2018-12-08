@@ -9,7 +9,7 @@
 //! assert_eq!("base64: AAECAw==", format!("base64: {}", wrapper));
 //! ```
 
-use {Encoding, Padding};
+use Padding;
 use super::chunked_encoder::ChunkedEncoder;
 use std::fmt::{Display, Formatter};
 use std::{fmt, str};
@@ -20,7 +20,7 @@ pub struct Base64Display<'a, C> {
     chunked_encoder: ChunkedEncoder<C>,
 }
 
-impl<'a, C> Base64Display<'a, C> where C: Encoding + Padding {
+impl<'a, C> Base64Display<'a, C> where C: ::encode::Encoding + Padding {
     /// Create a `Base64Display` with the provided config.
     pub fn with_config(bytes: &[u8], config: C) -> Base64Display<C> {
         Base64Display {
@@ -30,7 +30,7 @@ impl<'a, C> Base64Display<'a, C> where C: Encoding + Padding {
     }
 }
 
-impl<'a, C> Display for Base64Display<'a, C> where C: Encoding + Padding {
+impl<'a, C> Display for Base64Display<'a, C> where C: ::encode::Encoding + Padding {
     fn fmt(&self, formatter: &mut Formatter) -> Result<(), fmt::Error> {
         let mut sink = FormatterSink { f: formatter };
         self.chunked_encoder.encode(self.bytes, &mut sink)

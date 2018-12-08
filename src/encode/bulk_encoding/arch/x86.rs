@@ -1,9 +1,9 @@
-use {character_set, IntoBulkEncoding, encode::bulk_encoding::ScalarBulkEncoding};
+use encode::bulk_encoding;
 
 #[derive(Debug, Default, Clone, Copy)]
 pub struct BulkEncoding<C>(C);
 
-impl<C> ::BulkEncoding for BulkEncoding<C> where C: ::Encoding + sse::Translate128i + avx2::Translate256i {
+impl<C> bulk_encoding::BulkEncoding for BulkEncoding<C> where C: ::encode::Encoding + sse::Translate128i + avx2::Translate256i {
     const MIN_INPUT_BYTES: usize = sse::BulkEncoding::<C>::INPUT_CHUNK_BYTES_READ;
 
     #[inline]
@@ -13,13 +13,13 @@ impl<C> ::BulkEncoding for BulkEncoding<C> where C: ::Encoding + sse::Translate1
         } else if let Ok(encoding) = sse::BulkEncoding::new(self.0) {
             encoding.bulk_encode(input, output)
         } else {
-            ScalarBulkEncoding(self.0).bulk_encode(input, output)
+            bulk_encoding::ScalarBulkEncoding(self.0).bulk_encode(input, output)
         }
     }
 }
 impl<C> ::private::Sealed for BulkEncoding<C> {}
 
-impl IntoBulkEncoding for character_set::Standard {
+impl bulk_encoding::IntoBulkEncoding for ::StandardAlphabet {
     type BulkEncoding = BulkEncoding<Self>;
 
     #[inline]
@@ -28,7 +28,7 @@ impl IntoBulkEncoding for character_set::Standard {
     }
 }
 
-impl IntoBulkEncoding for character_set::UrlSafe {
+impl bulk_encoding::IntoBulkEncoding for ::UrlSafeAlphabet {
     type BulkEncoding = BulkEncoding<Self>;
 
     #[inline]
@@ -37,7 +37,7 @@ impl IntoBulkEncoding for character_set::UrlSafe {
     }
 }
 
-impl IntoBulkEncoding for character_set::Crypt {
+impl bulk_encoding::IntoBulkEncoding for ::CryptAlphabet {
     type BulkEncoding = BulkEncoding<Self>;
 
     #[inline]
@@ -118,7 +118,7 @@ mod sse {
     }
 
 
-    impl Translate128i for ::character_set::Standard {
+    impl Translate128i for ::StandardAlphabet {
         #[inline]
         #[target_feature(enable = "sse")]
         unsafe fn translate_m128i(input: __m128i) -> __m128i {
@@ -139,7 +139,7 @@ mod sse {
         }
     }
 
-    impl Translate128i for ::character_set::UrlSafe {
+    impl Translate128i for ::UrlSafeAlphabet {
         #[inline]
         #[target_feature(enable = "sse")]
         unsafe fn translate_m128i(input: __m128i) -> __m128i {
@@ -160,7 +160,7 @@ mod sse {
         }
     }
 
-    impl Translate128i for ::character_set::Crypt {
+    impl Translate128i for ::CryptAlphabet {
         #[inline]
         #[target_feature(enable = "sse")]
         unsafe fn translate_m128i(input: __m128i) -> __m128i {
@@ -259,7 +259,7 @@ mod avx2 {
         unsafe fn translate_m256i(input: __m256i) -> __m256i;
     }
 
-    impl Translate256i for ::character_set::Standard {
+    impl Translate256i for ::StandardAlphabet {
         #[inline]
         #[target_feature(enable = "avx2")]
         unsafe fn translate_m256i(input: __m256i) -> __m256i {
@@ -289,7 +289,7 @@ mod avx2 {
         }
     }
 
-    impl Translate256i for ::character_set::UrlSafe {
+    impl Translate256i for ::UrlSafeAlphabet {
         #[inline]
         #[target_feature(enable = "avx2")]
         unsafe fn translate_m256i(input: __m256i) -> __m256i {
@@ -319,7 +319,7 @@ mod avx2 {
         }
     }
 
-    impl Translate256i for ::character_set::Crypt {
+    impl Translate256i for ::CryptAlphabet {
         #[inline]
         #[target_feature(enable = "avx2")]
         unsafe fn translate_m256i(input: __m256i) -> __m256i {

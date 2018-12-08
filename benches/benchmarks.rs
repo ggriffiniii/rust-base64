@@ -6,14 +6,14 @@ extern crate rand;
 use base64::display;
 use base64::{
     decode_config, decode_config_buf, decode_config_slice, encode_config_buf,
-    encode_config_slice, write, Config,
+    encode_config_slice, write,
 };
 
 use criterion::{black_box, Bencher, Criterion, ParameterizedBenchmark, Throughput};
 use rand::{FromEntropy, Rng};
 use std::io::Write;
 
-const TEST_CONFIG: Config<base64::character_set::Standard, base64::WithPadding> = base64::STANDARD;
+const TEST_CONFIG: base64::Standard = base64::STANDARD;
 
 fn encode<T: ?Sized + AsRef<[u8]>>(input: &T) -> String {
     base64::encode_config(input, TEST_CONFIG)
