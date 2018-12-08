@@ -69,8 +69,16 @@ mod sse {
             }
         }
 
-        #[inline]
         pub(super) fn bulk_encode(self, input: &[u8], output: &mut [u8]) -> (usize, usize)
+        where
+            C: Translate128i,
+        {
+            unsafe { self._bulk_encode(input, output) }
+        }
+
+        #[inline]
+        #[target_feature(enable = "sse")]
+        unsafe fn _bulk_encode(self, input: &[u8], output: &mut [u8]) -> (usize, usize)
         where
             C: Translate128i,
         {
@@ -82,30 +90,28 @@ mod sse {
                 // Very briefly this loads 16 byte chunks, arranges the first 12
                 // bytes into 4 separate lanes of 3 bytes each. Each 3 byte lane is
                 // then encoded into the 4 bytes of it's base64 encoding.
-                unsafe {
-                    #[cfg_attr(feature = "cargo-clippy", allow(cast_ptr_alignment))]
-                    let mut data = _mm_loadu_si128(input.as_ptr().add(input_index) as *const __m128i);
-                    data = _mm_shuffle_epi8(
-                        data,
-                        _mm_setr_epi8(2, 2, 1, 0, 5, 5, 4, 3, 8, 8, 7, 6, 11, 11, 10, 9),
-                    );
-                    let mut mask = _mm_set1_epi32(0x3F00_0000);
-                    let mut res = _mm_and_si128(_mm_srli_epi32(data, 2), mask);
-                    mask = _mm_srli_epi32(mask, 8);
-                    res = _mm_or_si128(res, _mm_and_si128(_mm_srli_epi32(data, 4), mask));
-                    mask = _mm_srli_epi32(mask, 8);
-                    res = _mm_or_si128(res, _mm_and_si128(_mm_srli_epi32(data, 6), mask));
-                    mask = _mm_srli_epi32(mask, 8);
-                    res = _mm_or_si128(res, _mm_and_si128(data, mask));
+                #[cfg_attr(feature = "cargo-clippy", allow(cast_ptr_alignment))]
+                let mut data = _mm_loadu_si128(input.as_ptr().add(input_index) as *const __m128i);
+                data = _mm_shuffle_epi8(
+                    data,
+                    _mm_setr_epi8(2, 2, 1, 0, 5, 5, 4, 3, 8, 8, 7, 6, 11, 11, 10, 9),
+                );
+                let mut mask = _mm_set1_epi32(0x3F00_0000);
+                let mut res = _mm_and_si128(_mm_srli_epi32(data, 2), mask);
+                mask = _mm_srli_epi32(mask, 8);
+                res = _mm_or_si128(res, _mm_and_si128(_mm_srli_epi32(data, 4), mask));
+                mask = _mm_srli_epi32(mask, 8);
+                res = _mm_or_si128(res, _mm_and_si128(_mm_srli_epi32(data, 6), mask));
+                mask = _mm_srli_epi32(mask, 8);
+                res = _mm_or_si128(res, _mm_and_si128(data, mask));
 
-                    res = _mm_shuffle_epi8(
-                        res,
-                        _mm_setr_epi8(3, 2, 1, 0, 7, 6, 5, 4, 11, 10, 9, 8, 15, 14, 13, 12),
-                    );
-                    res = C::translate_m128i(res);
-                    #[cfg_attr(feature = "cargo-clippy", allow(cast_ptr_alignment))]
-                    _mm_storeu_si128(output.as_mut_ptr().add(output_index) as *mut __m128i, res);
-                }
+                res = _mm_shuffle_epi8(
+                    res,
+                    _mm_setr_epi8(3, 2, 1, 0, 7, 6, 5, 4, 11, 10, 9, 8, 15, 14, 13, 12),
+                );
+                res = C::translate_m128i(res);
+                #[cfg_attr(feature = "cargo-clippy", allow(cast_ptr_alignment))]
+                _mm_storeu_si128(output.as_mut_ptr().add(output_index) as *mut __m128i, res);
                 input_index += Self::INPUT_CHUNK_BYTES_ENCODED;
                 output_index += Self::OUTPUT_CHUNK_BYTES_WRITTEN;
             }
@@ -207,47 +213,54 @@ mod avx2 {
         where
             C: Translate256i,
         {
+            unsafe { self._bulk_encode(input, output) }
+        }
+
+        #[inline]
+        #[target_feature(enable = "avx2")]
+        unsafe fn _bulk_encode(self, input: &[u8], output: &mut [u8]) -> (usize, usize)
+        where
+            C: Translate256i,
+        {
             let mut output_index: usize = 0;
             let last_index = input.len() as isize - Self::INPUT_CHUNK_BYTES_READ as isize;
             let mut input_index = 0;
             while input_index as isize <= last_index {
                 // This is a straightforward adaptation of the SSE implemenation
                 // above, just extended for 256 bit registers.
-                unsafe {
-                    let input_ptr = input.as_ptr().add(input_index);
-                    #[cfg_attr(feature = "cargo-clippy", allow(cast_ptr_alignment))]
-                    let lo_data = _mm_loadu_si128(input_ptr as *const __m128i);
-                    #[cfg_attr(feature = "cargo-clippy", allow(cast_ptr_alignment))]
-                    let hi_data = _mm_loadu_si128(input_ptr.add(12) as *const __m128i);
-                    let mut data = _mm256_set_m128i(hi_data, lo_data);
-                    data = _mm256_shuffle_epi8(
-                        data,
-                        _mm256_setr_epi8(
-                            2, 2, 1, 0, 5, 5, 4, 3, 8, 8, 7, 6, 11, 11, 10, 9, 2, 2, 1, 0, 5, 5, 4, 3, 8,
-                            8, 7, 6, 11, 11, 10, 9,
-                        ),
-                    );
-                    let mut mask = _mm256_set1_epi32(0x3F00_0000);
-                    let mut res = _mm256_and_si256(_mm256_srli_epi32(data, 2), mask);
-                    mask = _mm256_srli_epi32(mask, 8);
-                    res = _mm256_or_si256(res, _mm256_and_si256(_mm256_srli_epi32(data, 4), mask));
-                    mask = _mm256_srli_epi32(mask, 8);
-                    res = _mm256_or_si256(res, _mm256_and_si256(_mm256_srli_epi32(data, 6), mask));
-                    mask = _mm256_srli_epi32(mask, 8);
-                    res = _mm256_or_si256(res, _mm256_and_si256(data, mask));
+                let input_ptr = input.as_ptr().add(input_index);
+                #[cfg_attr(feature = "cargo-clippy", allow(cast_ptr_alignment))]
+                let lo_data = _mm_loadu_si128(input_ptr as *const __m128i);
+                #[cfg_attr(feature = "cargo-clippy", allow(cast_ptr_alignment))]
+                let hi_data = _mm_loadu_si128(input_ptr.add(12) as *const __m128i);
+                let mut data = _mm256_set_m128i(hi_data, lo_data);
+                data = _mm256_shuffle_epi8(
+                    data,
+                    _mm256_setr_epi8(
+                        2, 2, 1, 0, 5, 5, 4, 3, 8, 8, 7, 6, 11, 11, 10, 9, 2, 2, 1, 0, 5, 5, 4, 3, 8,
+                        8, 7, 6, 11, 11, 10, 9,
+                    ),
+                );
+                let mut mask = _mm256_set1_epi32(0x3F00_0000);
+                let mut res = _mm256_and_si256(_mm256_srli_epi32(data, 2), mask);
+                mask = _mm256_srli_epi32(mask, 8);
+                res = _mm256_or_si256(res, _mm256_and_si256(_mm256_srli_epi32(data, 4), mask));
+                mask = _mm256_srli_epi32(mask, 8);
+                res = _mm256_or_si256(res, _mm256_and_si256(_mm256_srli_epi32(data, 6), mask));
+                mask = _mm256_srli_epi32(mask, 8);
+                res = _mm256_or_si256(res, _mm256_and_si256(data, mask));
 
-                    res = _mm256_shuffle_epi8(
-                        res,
-                        _mm256_setr_epi8(
-                            3, 2, 1, 0, 7, 6, 5, 4, 11, 10, 9, 8, 15, 14, 13, 12, 19, 18, 17, 16, 23, 22,
-                            21, 20, 27, 26, 25, 24, 31, 30, 29, 28,
-                        ),
-                    );
-                    res = C::translate_m256i(res);
+                res = _mm256_shuffle_epi8(
+                    res,
+                    _mm256_setr_epi8(
+                        3, 2, 1, 0, 7, 6, 5, 4, 11, 10, 9, 8, 15, 14, 13, 12, 19, 18, 17, 16, 23, 22,
+                        21, 20, 27, 26, 25, 24, 31, 30, 29, 28,
+                    ),
+                );
+                res = C::translate_m256i(res);
 
-                    #[cfg_attr(feature = "cargo-clippy", allow(cast_ptr_alignment))]
-                    _mm256_storeu_si256(output.as_mut_ptr().add(output_index) as *mut __m256i, res);
-                }
+                #[cfg_attr(feature = "cargo-clippy", allow(cast_ptr_alignment))]
+                _mm256_storeu_si256(output.as_mut_ptr().add(output_index) as *mut __m256i, res);
                 input_index += Self::INPUT_CHUNK_BYTES_ENCODED;
                 output_index += Self::OUTPUT_CHUNK_BYTES_WRITTEN;
             }
