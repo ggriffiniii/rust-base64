@@ -454,73 +454,37 @@ fn decode_chunk<C: Decoding>(
 ) -> Result<(), DecodeError> {
     let mut accum: u64;
 
-    let morsel = decoding.decode_u8(input[0]);
-    if morsel == decoding.invalid_value() {
-        return Err(DecodeError::InvalidByte(index_at_start_of_input, input[0]));
-    }
+    let morsel_at = |idx| {
+        let morsel = decoding.decode_u8(input[idx]);
+        if morsel == decoding.invalid_value() {
+            Err(DecodeError::InvalidByte(index_at_start_of_input + idx, input[idx]))
+        } else {
+            Ok(morsel)
+        }
+    };
+
+    let morsel = morsel_at(0)?;
     accum = (morsel as u64) << 58;
 
-    let morsel = decoding.decode_u8(input[1]);
-    if morsel == decoding.invalid_value() {
-        return Err(DecodeError::InvalidByte(
-            index_at_start_of_input + 1,
-            input[1],
-        ));
-    }
+    let morsel = morsel_at(1)?;
     accum |= (morsel as u64) << 52;
 
-    let morsel = decoding.decode_u8(input[2]);
-    if morsel == decoding.invalid_value() {
-        return Err(DecodeError::InvalidByte(
-            index_at_start_of_input + 2,
-            input[2],
-        ));
-    }
+    let morsel = morsel_at(2)?;
     accum |= (morsel as u64) << 46;
 
-    let morsel = decoding.decode_u8(input[3]);
-    if morsel == decoding.invalid_value() {
-        return Err(DecodeError::InvalidByte(
-            index_at_start_of_input + 3,
-            input[3],
-        ));
-    }
+    let morsel = morsel_at(3)?;
     accum |= (morsel as u64) << 40;
 
-    let morsel = decoding.decode_u8(input[4]);
-    if morsel == decoding.invalid_value() {
-        return Err(DecodeError::InvalidByte(
-            index_at_start_of_input + 4,
-            input[4],
-        ));
-    }
+    let morsel = morsel_at(4)?;
     accum |= (morsel as u64) << 34;
 
-    let morsel = decoding.decode_u8(input[5]);
-    if morsel == decoding.invalid_value() {
-        return Err(DecodeError::InvalidByte(
-            index_at_start_of_input + 5,
-            input[5],
-        ));
-    }
+    let morsel = morsel_at(5)?;
     accum |= (morsel as u64) << 28;
 
-    let morsel = decoding.decode_u8(input[6]);
-    if morsel == decoding.invalid_value() {
-        return Err(DecodeError::InvalidByte(
-            index_at_start_of_input + 6,
-            input[6],
-        ));
-    }
+    let morsel = morsel_at(6)?;
     accum |= (morsel as u64) << 22;
 
-    let morsel = decoding.decode_u8(input[7]);
-    if morsel == decoding.invalid_value() {
-        return Err(DecodeError::InvalidByte(
-            index_at_start_of_input + 7,
-            input[7],
-        ));
-    }
+    let morsel = morsel_at(7)?;
     accum |= (morsel as u64) << 16;
 
     BigEndian::write_u64(output, accum);
