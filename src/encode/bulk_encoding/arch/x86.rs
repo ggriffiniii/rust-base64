@@ -189,7 +189,7 @@ mod avx2 {
     #[derive(Debug, Default, Clone, Copy)]
     pub struct BulkEncoding<C>(C);
     impl<C> BulkEncoding<C> {
-        pub(super) const INPUT_CHUNK_BYTES_READ: usize = 32;
+        pub(super) const INPUT_CHUNK_BYTES_READ: usize = 28;
         pub(super) const INPUT_CHUNK_BYTES_ENCODED: usize = 24;
         pub(super) const OUTPUT_CHUNK_BYTES_WRITTEN: usize = 32;
 
@@ -278,7 +278,7 @@ mod avx2 {
             );
             let s3 = _mm256_and_si256(
                 s3mask,
-                _mm256_add_epi8(input, _mm256_set1_epi8(b'0' as i8 - 4)),
+                _mm256_add_epi8(input, _mm256_set1_epi8(b'0' as i8 - 52)),
             );
             let s4 = _mm256_and_si256(s4mask, _mm256_set1_epi8(b'+' as i8));
             let s5 = _mm256_andnot_si256(blockmask, _mm256_set1_epi8(b'/' as i8));
