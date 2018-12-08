@@ -59,7 +59,7 @@
     unused_import_braces,
     unused_results,
     variant_size_differences,
-    warnings,
+    //warnings,
 )]
 
 extern crate byteorder;

@@ -23,7 +23,7 @@ byteorder = "1.2.6"
 cfg-if = "0.1"
 
 [dev-dependencies]
-criterion = { version = "0.2", path = "../criterion.rs" }
+criterion = { git = "https://github.com/ggriffiniii/criterion.rs", branch = "throughput-change-staging" }
 rand = "0.5.5"
 
 [profile.bench]

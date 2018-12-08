@@ -1,28 +1,28 @@
-use encode::bulk_encoding::ScalarBulkEncoding;
+use encode::bulk_encoding;
 
-impl IntoBulkEncoding for character_set::Standard {
-    type BulkEncoding = ScalarBulkEncoding<Self>;
+impl bulk_encoding::IntoBulkEncoding for ::StandardAlphabet {
+    type BulkEncoding = bulk_encoding::ScalarBulkEncoding<Self>;
 
     #[inline]
-    fn into_bulk_encoding(self) -> ScalarBulkEncoding<Self> {
-        ScalarBulkEncoding(self)
+    fn into_bulk_encoding(self) -> Self::BulkEncoding {
+        bulk_encoding::ScalarBulkEncoding(self)
     }
 }
 
-impl IntoBulkEncoding for character_set::UrlSafe {
-    type BulkEncoding = ScalarBulkEncoding<Self>;
+impl bulk_encoding::IntoBulkEncoding for ::UrlSafeAlphabet {
+    type BulkEncoding = bulk_encoding::ScalarBulkEncoding<Self>;
 
     #[inline]
-    fn into_bulk_encoding(self) -> ScalarBulkEncoding<Self> {
-        ScalarBulkEncoding(self)
+    fn into_bulk_encoding(self) -> Self::BulkEncoding {
+        bulk_encoding::ScalarBulkEncoding(self)
     }
 }
 
-impl IntoBulkEncoding for character_set::Crypt {
-    type BulkEncoding = ScalarBulkEncoding<Self>;
+impl bulk_encoding::IntoBulkEncoding for ::CryptAlphabet {
+    type BulkEncoding = bulk_encoding::ScalarBulkEncoding<Self>;
 
     #[inline]
-    fn into_bulk_encoding(self) -> ScalarBulkEncoding<Self> {
-        ScalarBulkEncoding(self)
+    fn into_bulk_encoding(self) -> Self::BulkEncoding {
+        bulk_encoding::ScalarBulkEncoding(self)
     }
 }
