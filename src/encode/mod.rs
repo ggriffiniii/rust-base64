@@ -252,10 +252,7 @@ pub fn add_padding(input_len: usize, output: &mut [u8], padding_byte: u8) -> usi
     bytes_written
 }
 
-pub trait Encoding : ::private::Sealed + bulk_encoding::IntoBulkEncoding + Copy
-where
-    Self: Sized,
-{
+pub trait Encoding : ::private::Sealed + bulk_encoding::IntoBulkEncoding + Copy {
     fn encode_u6(self, input: u8) -> u8;
 }
 
