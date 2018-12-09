@@ -2,17 +2,16 @@ use byteorder::{BigEndian, ByteOrder};
 
 pub mod arch;
 
-pub trait IntoBulkEncoding : ::private::Sealed + Copy {
+pub trait IntoBulkEncoding: ::private::Sealed + Copy {
     type BulkEncoding: BulkEncoding;
     fn into_bulk_encoding(self) -> Self::BulkEncoding;
 }
 
-pub trait BulkEncoding : ::private::Sealed {
+pub trait BulkEncoding: ::private::Sealed {
     const MIN_INPUT_BYTES: usize;
 
     fn bulk_encode(self, input: &[u8], output: &mut [u8]) -> (usize, usize);
 }
-
 
 // TODO: remove the dead_code bypass once a custom alphabet encoding is provided.
 #[allow(dead_code)]
@@ -23,7 +22,10 @@ impl<C> ScalarBulkEncoding<C> {
     const OUTPUT_CHUNK_BYTES_WRITTEN: usize = 32;
 }
 
-impl<C> BulkEncoding for ScalarBulkEncoding<C> where C: ::encode::Encoding {
+impl<C> BulkEncoding for ScalarBulkEncoding<C>
+where
+    C: ::encode::Encoding,
+{
     const MIN_INPUT_BYTES: usize = 26;
 
     #[inline]
@@ -39,7 +41,8 @@ impl<C> BulkEncoding for ScalarBulkEncoding<C> where C: ::encode::Encoding {
             // Major performance wins from letting the optimizer do the bounds check once, mostly
             // on the output side
             let input_chunk = &input[input_index..(input_index + Self::INPUT_CHUNK_BYTES_READ)];
-            let output_chunk = &mut output[output_index..(output_index + Self::OUTPUT_CHUNK_BYTES_WRITTEN)];
+            let output_chunk =
+                &mut output[output_index..(output_index + Self::OUTPUT_CHUNK_BYTES_WRITTEN)];
 
             // Hand-unrolling for 32 vs 16 or 8 bytes produces yields performance about equivalent
             // to unsafe pointer code on a Xeon E5-1650v3. 64 byte unrolling was slightly better for

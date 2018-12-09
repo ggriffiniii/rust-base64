@@ -19,7 +19,11 @@ fn roundtrip_random_config_long() {
     roundtrip_random_config(Range::new(0, 1000), 10_000);
 }
 
-pub fn assert_encode_sanity<C: encode::Encoding + Padding>(encoded: &str, config: C, input_len: usize) {
+pub fn assert_encode_sanity<C: encode::Encoding + Padding>(
+    encoded: &str,
+    config: C,
+    input_len: usize,
+) {
     let input_rem = input_len % 3;
     let expected_padding_len = if input_rem > 0 {
         if config.has_padding() {
@@ -35,7 +39,11 @@ pub fn assert_encode_sanity<C: encode::Encoding + Padding>(encoded: &str, config
 
     assert_eq!(expected_encoded_len, encoded.len());
 
-    let padding_len = encoded.as_bytes().iter().filter(|&&c| Some(c) == config.padding_byte()).count();
+    let padding_len = encoded
+        .as_bytes()
+        .iter()
+        .filter(|&&c| Some(c) == config.padding_byte())
+        .count();
 
     assert_eq!(expected_padding_len, padding_len);
 
@@ -88,7 +96,6 @@ impl Padding for Configs {
             Crypt(x) => x.padding_byte(),
             CryptNoPad(x) => x.padding_byte(),
         }
-
     }
 }
 
@@ -111,33 +118,33 @@ impl ::encode::bulk_encoding::BulkEncoding for BulkEncoding {
     const MIN_INPUT_BYTES: usize = 0;
 
     fn bulk_encode(self, input: &[u8], output: &mut [u8]) -> (usize, usize) {
-        use encode::bulk_encoding::IntoBulkEncoding;
         use self::Configs::*;
+        use encode::bulk_encoding::IntoBulkEncoding;
         match self.0 {
             Standard(x) => {
                 let bulk_encoding = x.into_bulk_encoding();
                 bulk_encoding.bulk_encode(input, output)
-            },
+            }
             StandardNoPad(x) => {
                 let bulk_encoding = x.into_bulk_encoding();
                 bulk_encoding.bulk_encode(input, output)
-            },
+            }
             UrlSafe(x) => {
                 let bulk_encoding = x.into_bulk_encoding();
                 bulk_encoding.bulk_encode(input, output)
-            },
+            }
             UrlSafeNoPad(x) => {
                 let bulk_encoding = x.into_bulk_encoding();
                 bulk_encoding.bulk_encode(input, output)
-            },
+            }
             Crypt(x) => {
                 let bulk_encoding = x.into_bulk_encoding();
                 bulk_encoding.bulk_encode(input, output)
-            },
+            }
             CryptNoPad(x) => {
                 let bulk_encoding = x.into_bulk_encoding();
                 bulk_encoding.bulk_encode(input, output)
-            },
+            }
         }
     }
 }
@@ -181,8 +188,8 @@ impl ::private::Sealed for Configs {}
 
 impl rand::distributions::Distribution<Configs> for rand::distributions::Standard {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Configs {
-        use std::default::Default;
         use self::Configs::*;
+        use std::default::Default;
         match rng.gen_range(0, 6) {
             0 => Standard(Default::default()),
             1 => StandardNoPad(Default::default()),

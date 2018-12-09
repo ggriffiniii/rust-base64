@@ -94,10 +94,7 @@ pub fn decode<T: ?Sized + AsRef<[u8]>>(input: &T) -> Result<Vec<u8>, DecodeError
 ///    println!("{:?}", bytes_url);
 ///}
 ///```
-pub fn decode_config<T, C>(
-    input: &T,
-    config: C,
-) -> Result<Vec<u8>, DecodeError>
+pub fn decode_config<T, C>(input: &T, config: C) -> Result<Vec<u8>, DecodeError>
 where
     T: ?Sized + AsRef<[u8]>,
     C: Decoding + Padding,
@@ -178,12 +175,7 @@ where
 {
     let input_bytes = input.as_ref();
 
-    decode_helper(
-        input_bytes,
-        num_chunks(input_bytes),
-        config,
-        output,
-    )
+    decode_helper(input_bytes, num_chunks(input_bytes), config, output)
 }
 
 /// Return the number of input chunks (including a possibly partial final chunk) in the input
@@ -351,16 +343,17 @@ where
 
             if i % 4 < 2 {
                 // Check for case #2.
-                let bad_padding_index = start_of_leftovers + if padding_bytes > 0 {
-                    // If we've already seen padding, report the first padding index.
-                    // This is to be consistent with the faster logic above: it will report an
-                    // error on the first padding character (since it doesn't expect to see
-                    // anything but actual encoded data).
-                    first_padding_index
-                } else {
-                    // haven't seen padding before, just use where we are now
-                    i
-                };
+                let bad_padding_index = start_of_leftovers
+                    + if padding_bytes > 0 {
+                        // If we've already seen padding, report the first padding index.
+                        // This is to be consistent with the faster logic above: it will report an
+                        // error on the first padding character (since it doesn't expect to see
+                        // anything but actual encoded data).
+                        first_padding_index
+                    } else {
+                        // haven't seen padding before, just use where we are now
+                        i
+                    };
                 return Err(DecodeError::InvalidByte(bad_padding_index, *b));
             }
 
@@ -379,7 +372,7 @@ where
         if padding_bytes > 0 {
             return Err(DecodeError::InvalidByte(
                 start_of_leftovers + first_padding_index,
-                decoding.padding_byte().unwrap()
+                decoding.padding_byte().unwrap(),
             ));
         }
         last_symbol = *b;
@@ -456,9 +449,12 @@ fn decode_chunk<C: Decoding>(
     for idx in 0..8 {
         let morsel = decoding.decode_u8(input[idx]);
         if morsel == decoding.invalid_value() {
-            return Err(DecodeError::InvalidByte(index_at_start_of_input + idx, input[idx]));
+            return Err(DecodeError::InvalidByte(
+                index_at_start_of_input + idx,
+                input[idx],
+            ));
         }
-        accum |= (morsel as u64) << (64-(6*(idx+1)))
+        accum |= (morsel as u64) << (64 - (6 * (idx + 1)))
     }
     BigEndian::write_u64(output, accum);
 
@@ -476,12 +472,7 @@ fn decode_chunk_precise<C: Decoding>(
 ) -> Result<(), DecodeError> {
     let mut tmp_buf = [0_u8; 8];
 
-    decode_chunk(
-        input,
-        index_at_start_of_input,
-        decoding,
-        &mut tmp_buf[..],
-    )?;
+    decode_chunk(input, index_at_start_of_input, decoding, &mut tmp_buf[..])?;
 
     output[0..6].copy_from_slice(&tmp_buf[0..6]);
 
@@ -489,11 +480,11 @@ fn decode_chunk_precise<C: Decoding>(
 }
 
 #[inline]
-fn decode_by_table(input: u8, decode_table: &[u8;256]) -> u8 {
+fn decode_by_table(input: u8, decode_table: &[u8; 256]) -> u8 {
     decode_table[input as usize]
 }
 
-pub trait Decoding : ::private::Sealed + Copy {
+pub trait Decoding: ::private::Sealed + Copy {
     fn decode_u8(self, input: u8) -> u8;
     fn invalid_value(self) -> u8;
 }
@@ -545,7 +536,6 @@ impl Decoding for &::CustomConfig {
         self.invalid_value
     }
 }
-
 
 #[cfg(test)]
 mod tests {

@@ -5,8 +5,8 @@ extern crate rand;
 
 use base64::display;
 use base64::{
-    decode_config, decode_config_buf, decode_config_slice, encode_config_buf,
-    encode_config_slice, write,
+    decode_config, decode_config_buf, decode_config_slice, encode_config_buf, encode_config_slice,
+    write,
 };
 
 use criterion::{black_box, Bencher, Criterion, ParameterizedBenchmark, Throughput};

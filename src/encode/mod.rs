@@ -36,7 +36,7 @@ pub fn encode<T: ?Sized + AsRef<[u8]>>(input: &T) -> String {
 ///    println!("{}", b64_url);
 ///}
 ///```
-pub fn encode_config<T, C>(input: &T, config: C) -> String 
+pub fn encode_config<T, C>(input: &T, config: C) -> String
 where
     T: ?Sized + AsRef<[u8]>,
     C: Encoding + Padding,
@@ -117,11 +117,7 @@ where
 ///     assert_eq!(s, base64::decode(&buf).unwrap().as_slice());
 /// }
 /// ```
-pub fn encode_config_slice<T, C>(
-    input: &T,
-    config: C,
-    output: &mut [u8],
-) -> usize
+pub fn encode_config_slice<T, C>(input: &T, config: C, output: &mut [u8]) -> usize
 where
     T: ?Sized + AsRef<[u8]>,
     C: Encoding + Padding,
@@ -193,8 +189,10 @@ where
         let output_chunk = &mut output[output_index..(output_index + 4)];
 
         output_chunk[0] = char_set.encode_u6(input_chunk[0] >> 2);
-        output_chunk[1] = char_set.encode_u6((input_chunk[0] << 4 | input_chunk[1] >> 4) & LOW_SIX_BITS_U8);
-        output_chunk[2] = char_set.encode_u6((input_chunk[1] << 2 | input_chunk[2] >> 6) & LOW_SIX_BITS_U8);
+        output_chunk[1] =
+            char_set.encode_u6((input_chunk[0] << 4 | input_chunk[1] >> 4) & LOW_SIX_BITS_U8);
+        output_chunk[2] =
+            char_set.encode_u6((input_chunk[1] << 2 | input_chunk[2] >> 6) & LOW_SIX_BITS_U8);
         output_chunk[3] = char_set.encode_u6(input_chunk[2] & LOW_SIX_BITS_U8);
 
         input_index += 3;
@@ -202,8 +200,10 @@ where
     }
     if rem == 2 {
         output[output_index] = char_set.encode_u6(input[start_of_rem] >> 2);
-        output[output_index + 1] = char_set.encode_u6((input[start_of_rem] << 4 | input[start_of_rem + 1] >> 4) & LOW_SIX_BITS_U8);
-        output[output_index + 2] = char_set.encode_u6((input[start_of_rem + 1] << 2) & LOW_SIX_BITS_U8);
+        output[output_index + 1] = char_set
+            .encode_u6((input[start_of_rem] << 4 | input[start_of_rem + 1] >> 4) & LOW_SIX_BITS_U8);
+        output[output_index + 2] =
+            char_set.encode_u6((input[start_of_rem + 1] << 2) & LOW_SIX_BITS_U8);
         output_index += 3;
     } else if rem == 1 {
         output[output_index] = char_set.encode_u6(input[start_of_rem] >> 2);
@@ -252,12 +252,12 @@ pub fn add_padding(input_len: usize, output: &mut [u8], padding_byte: u8) -> usi
     bytes_written
 }
 
-pub trait Encoding : ::private::Sealed + bulk_encoding::IntoBulkEncoding + Copy {
+pub trait Encoding: ::private::Sealed + bulk_encoding::IntoBulkEncoding + Copy {
     fn encode_u6(self, input: u8) -> u8;
 }
 
 #[inline]
-fn encode_u6_by_table(input: u8, encode_table: &[u8;64]) -> u8 {
+fn encode_u6_by_table(input: u8, encode_table: &[u8; 64]) -> u8 {
     debug_assert!(input < 64);
     encode_table[input as usize]
 }
@@ -289,7 +289,6 @@ impl Encoding for &::CustomConfig {
         encode_u6_by_table(input, &self.encode_table)
     }
 }
-
 
 #[cfg(test)]
 mod tests {

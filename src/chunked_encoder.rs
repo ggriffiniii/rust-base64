@@ -18,7 +18,10 @@ pub struct ChunkedEncoder<C> {
     max_input_chunk_len: usize,
 }
 
-impl<C> ChunkedEncoder<C> where C: ::encode::Encoding + Padding {
+impl<C> ChunkedEncoder<C>
+where
+    C: ::encode::Encoding + Padding,
+{
     pub fn new(config: C) -> ChunkedEncoder<C> {
         ChunkedEncoder {
             config,
@@ -27,7 +30,7 @@ impl<C> ChunkedEncoder<C> where C: ::encode::Encoding + Padding {
     }
 
     pub fn encode<S>(&self, bytes: &[u8], sink: &mut S) -> Result<(), S::Error>
-    where 
+    where
         S: Sink,
         C: ::encode::Encoding + Padding,
     {
@@ -41,8 +44,7 @@ impl<C> ChunkedEncoder<C> where C: ::encode::Encoding + Padding {
 
             let chunk = &bytes[input_index..(input_index + input_chunk_len)];
 
-            let mut b64_bytes_written =
-                encode_to_slice(chunk, &mut encode_buf, self.config);
+            let mut b64_bytes_written = encode_to_slice(chunk, &mut encode_buf, self.config);
 
             input_index += input_chunk_len;
             let more_input_left = input_index < bytes.len();
@@ -51,7 +53,11 @@ impl<C> ChunkedEncoder<C> where C: ::encode::Encoding + Padding {
                 if !more_input_left {
                     // no more input, add padding if needed. Buffer will have room because
                     // max_input_length leaves room for it.
-                    b64_bytes_written += add_padding(bytes.len(), &mut encode_buf[b64_bytes_written..], padding_byte);
+                    b64_bytes_written += add_padding(
+                        bytes.len(),
+                        &mut encode_buf[b64_bytes_written..],
+                        padding_byte,
+                    );
                 }
             }
 
@@ -180,7 +186,9 @@ pub mod tests {
         assert_eq!(300, max_input_length(401, config));
     }
 
-    pub(crate) fn chunked_encode_matches_normal_encode_random<S: SinkTestHelper>(sink_test_helper: &S) {
+    pub(crate) fn chunked_encode_matches_normal_encode_random<S: SinkTestHelper>(
+        sink_test_helper: &S,
+    ) {
         let mut input_buf: Vec<u8> = Vec::new();
         let mut output_buf = String::new();
         let mut rng = rand::rngs::SmallRng::from_entropy();
@@ -201,9 +209,11 @@ pub mod tests {
             encode_config_buf(&input_buf, config, &mut output_buf);
 
             assert_eq!(
-                output_buf, chunk_encoded_string,
+                output_buf,
+                chunk_encoded_string,
                 "input len={}, config: has_padding={}",
-                buf_len, config.has_padding()
+                buf_len,
+                config.has_padding()
             );
         }
     }

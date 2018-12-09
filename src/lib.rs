@@ -75,7 +75,9 @@ mod encode;
 pub use encode::{encode, encode_config, encode_config_buf, encode_config_slice, Encoding};
 
 mod decode;
-pub use decode::{decode, decode_config, decode_config_buf, decode_config_slice, DecodeError, Decoding};
+pub use decode::{
+    decode, decode_config, decode_config_buf, decode_config_slice, DecodeError, Decoding,
+};
 
 #[cfg(test)]
 mod tests;
@@ -108,7 +110,7 @@ mod private {
 
 /// Padding defines whether padding is used when encoding/decoding and if so
 /// which character is to be used.
-pub trait Padding : private::Sealed + Copy {
+pub trait Padding: private::Sealed + Copy {
     fn padding_byte(self) -> Option<u8>;
 
     #[inline]
@@ -122,7 +124,9 @@ pub trait Padding : private::Sealed + Copy {
 pub struct WithPadding;
 impl Padding for WithPadding {
     #[inline]
-    fn padding_byte(self) -> Option<u8> { Some(b'=') }
+    fn padding_byte(self) -> Option<u8> {
+        Some(b'=')
+    }
 }
 impl private::Sealed for WithPadding {}
 
@@ -131,7 +135,9 @@ impl private::Sealed for WithPadding {}
 pub struct NoPadding;
 impl Padding for NoPadding {
     #[inline]
-    fn padding_byte(self) -> Option<u8> { None }
+    fn padding_byte(self) -> Option<u8> {
+        None
+    }
 }
 impl private::Sealed for NoPadding {}
 
@@ -141,21 +147,33 @@ impl private::Sealed for NoPadding {}
 #[derive(Debug, Default, Clone, Copy)]
 pub struct Config<A: Copy, P: Copy>(A, P);
 
-impl<A, P> Padding for Config<A, P> where A: Copy, P: Padding {
+impl<A, P> Padding for Config<A, P>
+where
+    A: Copy,
+    P: Padding,
+{
     #[inline]
     fn padding_byte(self) -> Option<u8> {
         self.1.padding_byte()
     }
 }
 
-impl<A, P> encode::Encoding for Config<A, P> where A: encode::Encoding, P: Copy {
+impl<A, P> encode::Encoding for Config<A, P>
+where
+    A: encode::Encoding,
+    P: Copy,
+{
     #[inline]
     fn encode_u6(self, input: u8) -> u8 {
         self.0.encode_u6(input)
     }
 }
 
-impl<A, P> encode::bulk_encoding::IntoBulkEncoding for Config<A, P> where A: encode::bulk_encoding::IntoBulkEncoding, P: Copy {
+impl<A, P> encode::bulk_encoding::IntoBulkEncoding for Config<A, P>
+where
+    A: encode::bulk_encoding::IntoBulkEncoding,
+    P: Copy,
+{
     type BulkEncoding = A::BulkEncoding;
 
     #[inline]
@@ -164,7 +182,11 @@ impl<A, P> encode::bulk_encoding::IntoBulkEncoding for Config<A, P> where A: enc
     }
 }
 
-impl<A, P> decode::Decoding for Config<A, P> where A: decode::Decoding, P: Copy {
+impl<A, P> decode::Decoding for Config<A, P>
+where
+    A: decode::Decoding,
+    P: Copy,
+{
     #[inline]
     fn decode_u8(self, input: u8) -> u8 {
         self.0.decode_u8(input)
@@ -176,7 +198,12 @@ impl<A, P> decode::Decoding for Config<A, P> where A: decode::Decoding, P: Copy 
     }
 }
 
-impl<A, P> private::Sealed for Config<A, P> where A: Copy, P: Copy {}
+impl<A, P> private::Sealed for Config<A, P>
+where
+    A: Copy,
+    P: Copy,
+{
+}
 
 #[derive(Debug, Default, Clone, Copy)]
 pub struct StandardAlphabet;
@@ -192,21 +219,25 @@ impl ::private::Sealed for UrlSafeAlphabet {}
 impl ::private::Sealed for CryptAlphabet {}
 
 #[derive(Clone)]
-pub struct ConfigBuilder{
-    alphabet: [u8;64],
+pub struct ConfigBuilder {
+    alphabet: [u8; 64],
     padding_byte: Option<u8>,
 }
 
 impl std::fmt::Debug for ConfigBuilder {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "ConfigBuilder{{alphabet: {:?}, padding_byte: {:?}}}", &self.alphabet[..], self.padding_byte)
+        write!(
+            f,
+            "ConfigBuilder{{alphabet: {:?}, padding_byte: {:?}}}",
+            &self.alphabet[..],
+            self.padding_byte
+        )
     }
 }
 
-
 impl ConfigBuilder {
-    pub fn with_alphabet(alphabet: [u8;64]) -> ConfigBuilder {
-        ConfigBuilder{
+    pub fn with_alphabet(alphabet: [u8; 64]) -> ConfigBuilder {
+        ConfigBuilder {
             alphabet,
             padding_byte: Some(b'='),
         }
@@ -224,7 +255,7 @@ impl ConfigBuilder {
 
     // TODO: Use something better than a String for error.
     pub fn build(self) -> Result<CustomConfig, String> {
-        let mut decode_scratch: Vec<Option<u8>> = vec![None;256];
+        let mut decode_scratch: Vec<Option<u8>> = vec![None; 256];
         for (i, b) in self.alphabet.iter().cloned().enumerate() {
             if decode_scratch[b as usize].is_some() {
                 return Err(format!("Duplicate value in alphabet: {}", b));
@@ -232,11 +263,20 @@ impl ConfigBuilder {
             decode_scratch[b as usize] = Some(i as u8);
         }
         // One of the unused values is used as a sentinel `invalid_value`. Arbitrarily use the lowest unused byte.
-        let invalid_value = decode_scratch.iter().enumerate().filter(|(_, b)| b.is_none()).nth(0).map(|(i, _)| i as u8).expect("should always have atleast one unused value in the decode table");
-        let decode_scratch: Vec<u8> = decode_scratch.into_iter().map(|b| b.unwrap_or(invalid_value)).collect();
-        let mut decode_table = [0;256];
+        let invalid_value = decode_scratch
+            .iter()
+            .enumerate()
+            .filter(|(_, b)| b.is_none())
+            .nth(0)
+            .map(|(i, _)| i as u8)
+            .expect("should always have atleast one unused value in the decode table");
+        let decode_scratch: Vec<u8> = decode_scratch
+            .into_iter()
+            .map(|b| b.unwrap_or(invalid_value))
+            .collect();
+        let mut decode_table = [0; 256];
         decode_table.copy_from_slice(&decode_scratch);
-        Ok(CustomConfig{
+        Ok(CustomConfig {
             encode_table: self.alphabet,
             decode_table: decode_table,
             invalid_value: invalid_value,
@@ -246,9 +286,9 @@ impl ConfigBuilder {
 }
 
 #[derive(Clone)]
-pub struct CustomConfig{
-    encode_table: [u8;64],
-    decode_table: [u8;256],
+pub struct CustomConfig {
+    encode_table: [u8; 64],
+    decode_table: [u8; 256],
     invalid_value: u8,
     padding_byte: Option<u8>,
 }
