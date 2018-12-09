@@ -452,41 +452,15 @@ fn decode_chunk<C: Decoding>(
     decoding: C,
     output: &mut [u8],
 ) -> Result<(), DecodeError> {
-    let mut accum: u64;
+    let mut accum: u64 = 0;
 
-    let morsel_at = |idx| {
+    for idx in 0..8 {
         let morsel = decoding.decode_u8(input[idx]);
         if morsel == decoding.invalid_value() {
-            Err(DecodeError::InvalidByte(index_at_start_of_input + idx, input[idx]))
-        } else {
-            Ok(morsel)
+            return Err(DecodeError::InvalidByte(index_at_start_of_input + idx, input[idx]));
         }
-    };
-
-    let morsel = morsel_at(0)?;
-    accum = (morsel as u64) << 58;
-
-    let morsel = morsel_at(1)?;
-    accum |= (morsel as u64) << 52;
-
-    let morsel = morsel_at(2)?;
-    accum |= (morsel as u64) << 46;
-
-    let morsel = morsel_at(3)?;
-    accum |= (morsel as u64) << 40;
-
-    let morsel = morsel_at(4)?;
-    accum |= (morsel as u64) << 34;
-
-    let morsel = morsel_at(5)?;
-    accum |= (morsel as u64) << 28;
-
-    let morsel = morsel_at(6)?;
-    accum |= (morsel as u64) << 22;
-
-    let morsel = morsel_at(7)?;
-    accum |= (morsel as u64) << 16;
-
+        accum |= (morsel as u64) << (64-(6*(idx+1)))
+    }
     BigEndian::write_u64(output, accum);
 
     Ok(())
