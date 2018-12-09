@@ -102,8 +102,7 @@ where
     T: ?Sized + AsRef<[u8]>,
     C: Decoding + Padding,
 {
-    let mut buffer = Vec::<u8>::with_capacity(input.as_ref().len() * 4 / 3);
-
+    let mut buffer = Vec::new();
     decode_config_buf(input, config, &mut buffer).map(|_| buffer)
 }
 
